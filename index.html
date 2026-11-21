@@ -138,13 +138,37 @@
       color: #fff;
       border-color: var(--accent);
     }
+    .dropzone {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      background: #fcfaf7;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .dropzone.dragover {
+      border-color: var(--accent);
+      background: #fff3ee;
+    }
+    .photo-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .photo-thumb-wrap {
+      position: relative;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 6px;
+      background: #fff;
+    }
     .preview-img {
       max-width: 100%;
-      max-height: 300px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
+      max-height: 220px;
+      border-radius: 8px;
       object-fit: contain;
       background: #fcfaf7;
+      display: block;
     }
     .preview-media {
       max-width: 100%;
@@ -317,8 +341,7 @@
           <div>
             <label for="gemini-model-select">Modello Gemini:</label>
             <select id="gemini-model-select">
-              <option value="gemini-3.8-flash">gemini-3.8-flash (veloce e ottimo su foto/audio/testi)</option>
-              <option value="gemini-3.8-pro">gemini-3.8-pro (più approfondito su calligrafie/video)</option>
+              <option value="gemini-3.8-flash">gemini-3.8-flash (consigliato su foto, audio e testi)</option>
             </select>
           </div>
         </div>
@@ -343,11 +366,18 @@
           <button type="button" id="tab-text" class="secondary small mode-tab">Testo / Manuale</button>
         </div>
 
-        <!-- 1. FOTO -->
+        <!-- 1. FOTO (MULTI-FOGLIO + DRAG & DROP) -->
         <div id="panel-photo" class="stack" style="margin-bottom: 14px;">
-          <label for="recipe-photo-input">Scatta una foto o scegli un'immagine (anche con più ricette, stampe o scritte a mano):</label>
-          <input type="file" id="recipe-photo-input" accept="image/*" capture="environment" />
-          <img id="photo-preview" class="preview-img hidden" alt="Anteprima ricetta" />
+          <div id="photo-dropzone" class="dropzone stack">
+            <label for="recipe-photo-input">
+              Scatta o scegli uno o più fogli (anche fronte/retro o più pagine per la stessa ricetta), oppure trascina qui i file da PC:
+            </label>
+            <input type="file" id="recipe-photo-input" accept="image/*" multiple />
+            <div style="font-size: 12px; color: var(--muted);">
+              Suggerimento: puoi selezionare più immagini insieme oppure trascinarle qui con il mouse.
+            </div>
+            <div id="photo-preview-list" class="photo-grid"></div>
+          </div>
           <div>
             <button type="button" id="analyze-photo-btn">Analizza foto con AI</button>
           </div>
@@ -558,7 +588,8 @@
     ];
 
     const DEFAULT_AI_RULES =
-      "Se in una foto, audio, video o testo sono presenti PIÙ ricette distinte, separale in elementi diversi nell'array 'recipes'. " +
+      "Se in una o più foto, audio, video o testo sono presenti PIÙ ricette distinte, separale in elementi diversi nell'array 'recipes'. " +
+      "Se più foto appartengono alla stessa ricetta (es. fronte/retro o pagine successive), uniscile in un'unica ricetta completa. " +
       "Cataloga ogni ricetta scegliendo una delle categorie disponibili. " +
       "Usa 'Conserve' per marmellate, confetture, sottaceti, sott'oli e sughi da vasetto. " +
       "Usa 'Lievitati' per pane, pizza, focacce, cantucci/biscotti lievitati e brioche. " +
@@ -570,7 +601,7 @@
     let aiRules = DEFAULT_AI_RULES;
     let allRecipes = [];
 
-    let currentPhotoDataUrl = null;
+    let currentPhotoDataUrls = [];
     let currentAudioMedia = null;
     let currentVideoMedia = null;
 
@@ -620,8 +651,9 @@
     const panelVideo = document.getElementById("panel-video");
     const panelText = document.getElementById("panel-text");
 
+    const photoDropzone = document.getElementById("photo-dropzone");
     const recipePhotoInput = document.getElementById("recipe-photo-input");
-    const photoPreview = document.getElementById("photo-preview");
+    const photoPreviewList = document.getElementById("photo-preview-list");
     const analyzePhotoBtn = document.getElementById("analyze-photo-btn");
 
     const startRecBtn = document.getElementById("start-rec-btn");
@@ -813,7 +845,7 @@
         proxyUrlInput.value = localStorage.getItem("luigina_proxy_url") || "";
         proxySecretInput.value = localStorage.getItem("luigina_proxy_secret") || "";
         localGeminiKeyInput.value = localStorage.getItem("luigina_gemini_key") || "";
-        geminiModelSelect.value = localStorage.getItem("luigina_gemini_model") || "gemini-3.8-flash";
+        geminiModelSelect.value = "gemini-3.8-flash";
         setupMsg.classList.add("hidden");
         renderSetupCategories();
         setupCard.classList.remove("hidden");
@@ -875,7 +907,7 @@
       const proxyUrl = proxyUrlInput.value.trim();
       const proxySecret = proxySecretInput.value.trim();
       const keyVal = localGeminiKeyInput.value.trim();
-      const modelVal = geminiModelSelect.value;
+      const modelVal = "gemini-3.8-flash";
 
       if (proxyUrl) localStorage.setItem("luigina_proxy_url", proxyUrl);
       else localStorage.removeItem("luigina_proxy_url");
@@ -971,17 +1003,66 @@
       });
     }
 
-    recipePhotoInput.addEventListener("change", async (e) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      try {
-        currentPhotoDataUrl = await readImageAsCompressedDataUrl(file);
-        photoPreview.src = currentPhotoDataUrl;
-        photoPreview.classList.remove("hidden");
-      } catch (err) {
-        console.error(err);
-        showAiStatus("Impossibile leggere l'immagine selezionata.", false);
+    function renderPhotoPreviews() {
+      photoPreviewList.innerHTML = "";
+      currentPhotoDataUrls.forEach((dataUrl, idx) => {
+        const wrap = document.createElement("div");
+        wrap.className = "photo-thumb-wrap";
+        wrap.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:4px;">
+            <span style="font-size:12px; font-weight:600; color:var(--muted);">Foglio ${idx + 1}</span>
+            <button type="button" class="danger small remove-photo-btn">✕</button>
+          </div>
+          <img src="${dataUrl}" class="preview-img" alt="Foglio ${idx + 1}" />
+        `;
+        wrap.querySelector(".remove-photo-btn").addEventListener("click", () => {
+          currentPhotoDataUrls.splice(idx, 1);
+          renderPhotoPreviews();
+        });
+        photoPreviewList.appendChild(wrap);
+      });
+    }
+
+    async function handleIncomingPhotoFiles(fileList) {
+      const files = Array.from(fileList || []).filter((f) => f.type.startsWith("image/"));
+      if (files.length === 0) return;
+      for (const file of files) {
+        try {
+          const compressed = await readImageAsCompressedDataUrl(file);
+          currentPhotoDataUrls.push(compressed);
+        } catch (err) {
+          console.error(err);
+          showAiStatus(`Impossibile leggere il file "${file.name}".`, false);
+        }
       }
+      renderPhotoPreviews();
+    }
+
+    recipePhotoInput.addEventListener("change", async (e) => {
+      await handleIncomingPhotoFiles(e.target.files);
+      recipePhotoInput.value = "";
+    });
+
+    // DRAG AND DROP FOTO DA PC
+    ["dragenter", "dragover"].forEach((evName) => {
+      photoDropzone.addEventListener(evName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        photoDropzone.classList.add("dragover");
+      });
+    });
+
+    ["dragleave", "drop"].forEach((evName) => {
+      photoDropzone.addEventListener(evName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        photoDropzone.classList.remove("dragover");
+      });
+    });
+
+    photoDropzone.addEventListener("drop", async (e) => {
+      const files = e.dataTransfer?.files;
+      await handleIncomingPhotoFiles(files);
     });
 
     startRecBtn.addEventListener("click", async () => {
@@ -1074,123 +1155,115 @@
     }
 
     async function invokeGemini({ contents, generationConfig = {}, tools = null }) {
-  const proxyUrl = (localStorage.getItem("luigina_proxy_url") || "").trim();
-  const proxySecret = (localStorage.getItem("luigina_proxy_secret") || "").trim();
-  const localKey = (localStorage.getItem("luigina_gemini_key") || "").trim();
-  let primaryModel = localStorage.getItem("luigina_gemini_model") || "gemini-3.8-flash";
-  if (primaryModel.startsWith("gemini-2.5")) {
-    primaryModel = primaryModel.replace("gemini-2.5", "gemini-3.8");
-    localStorage.setItem("luigina_gemini_model", primaryModel);
-  }
+      const proxyUrl = (localStorage.getItem("luigina_proxy_url") || "").trim();
+      const proxySecret = (localStorage.getItem("luigina_proxy_secret") || "").trim();
+      const localKey = (localStorage.getItem("luigina_gemini_key") || "").trim();
+      const model = "gemini-3.8-flash";
+      localStorage.setItem("luigina_gemini_model", model);
 
-  const fallbackModel = primaryModel === "gemini-3.8-flash" ? "gemini-3.8-pro" : "gemini-3.8-flash";
-  const modelsToTry = [primaryModel, fallbackModel];
-
-  if (!proxyUrl && !localKey) {
-    throw new Error("Configura l'URL Proxy Apps Script oppure la chiave API Gemini nel pannello 'Setup' (Admin).");
-  }
-
-  if (proxyUrl && !proxyUrl.startsWith("https://")) {
-    throw new Error(`URL proxy non valido: ${proxyUrl}`);
-  }
-
-  let lastErr = null;
-
-  for (const model of modelsToTry) {
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      try {
-        if (attempt > 1 || model !== primaryModel) {
-          showAiStatus(`Server AI occupato: riprovo con ${model} (tentativo ${attempt})...`, true);
-        }
-
-        if (proxyUrl) {
-          const payload = {
-            secret: proxySecret,
-            model,
-            contents,
-            generationConfig
-          };
-          if (tools) payload.tools = tools;
-
-          const resp = await fetch(proxyUrl, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(payload)
-          });
-
-          const rawBody = await resp.text();
-          let data;
-          try {
-            data = JSON.parse(rawBody);
-          } catch {
-            throw new Error(`Risposta non JSON dal proxy (${resp.status}): ${rawBody.slice(0, 200)}`);
-          }
-
-          const errMsg = data?.error?.message || data?.error || "";
-          const isOverloaded =
-            resp.status === 503 ||
-            resp.status === 429 ||
-            data?._status === 503 ||
-            data?._status === 429 ||
-            String(errMsg).includes("503") ||
-            String(errMsg).includes("UNAVAILABLE") ||
-            String(errMsg).includes("high demand");
-
-          if (isOverloaded) {
-            lastErr = new Error(`Modello ${model} temporaneamente sovraccarico (503).`);
-            await new Promise((r) => setTimeout(r, 1500 * attempt));
-            continue;
-          }
-
-          if (!resp.ok || data.error) {
-            throw new Error(typeof data.error === "string" ? data.error : JSON.stringify(data.error));
-          }
-
-          return data;
-        } else {
-          const body = { contents, generationConfig };
-          if (tools) body.tools = tools;
-
-          const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(localKey)}`;
-          const resp = await fetch(endpoint, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body)
-          });
-
-          if (resp.status === 503 || resp.status === 429) {
-            lastErr = new Error(`Modello ${model} temporaneamente sovraccarico (${resp.status}).`);
-            await new Promise((r) => setTimeout(r, 1500 * attempt));
-            continue;
-          }
-
-          if (!resp.ok) {
-            const errText = await resp.text();
-            throw new Error(`Errore API Gemini (${resp.status}): ${errText.slice(0, 200)}`);
-          }
-          return await resp.json();
-        }
-      } catch (err) {
-        if (String(err.message || "").includes("Failed to fetch")) {
-          lastErr = new Error(
-            `Failed to fetch verso il proxy Apps Script (${proxyUrl}).\n` +
-            `Dettaglio tecnico: ${err.message}`
-          );
-          await new Promise((r) => setTimeout(r, 1200));
-          continue;
-        }
-        if (String(err.message || "").includes("sovraccarico")) {
-          lastErr = err;
-          continue;
-        }
-        throw err;
+      if (!proxyUrl && !localKey) {
+        throw new Error("Configura l'URL Proxy Apps Script oppure la chiave API Gemini nel pannello 'Setup' (Admin).");
       }
-    }
-  }
 
-  throw lastErr || new Error("I modelli Gemini sono momentaneamente sovraccarichi. Riprova tra un minuto.");
-}
-      
+      if (proxyUrl && !proxyUrl.startsWith("https://")) {
+        throw new Error(`URL proxy non valido: ${proxyUrl}`);
+      }
+
+      let lastErr = null;
+
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          if (attempt > 1) {
+            showAiStatus(`Server AI occupato: nuovo tentativo ${attempt} di 3...`, true);
+          }
+
+          if (proxyUrl) {
+            const payload = {
+              secret: proxySecret,
+              model,
+              contents,
+              generationConfig
+            };
+            if (tools) payload.tools = tools;
+
+            const resp = await fetch(proxyUrl, {
+              method: "POST",
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              body: JSON.stringify(payload)
+            });
+
+            const rawBody = await resp.text();
+            let data;
+            try {
+              data = JSON.parse(rawBody);
+            } catch {
+              throw new Error(`Risposta non JSON dal proxy (${resp.status}): ${rawBody.slice(0, 200)}`);
+            }
+
+            const errMsg = data?.error?.message || data?.error || "";
+            const isOverloaded =
+              resp.status === 503 ||
+              resp.status === 429 ||
+              data?._status === 503 ||
+              data?._status === 429 ||
+              String(errMsg).includes("503") ||
+              String(errMsg).includes("UNAVAILABLE") ||
+              String(errMsg).includes("high demand");
+
+            if (isOverloaded) {
+              lastErr = new Error(`Modello ${model} temporaneamente sovraccarico (503).`);
+              await new Promise((r) => setTimeout(r, 1500 * attempt));
+              continue;
+            }
+
+            if (!resp.ok || data.error) {
+              throw new Error(typeof data.error === "string" ? data.error : JSON.stringify(data.error));
+            }
+
+            return data;
+          } else {
+            const body = { contents, generationConfig };
+            if (tools) body.tools = tools;
+
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(localKey)}`;
+            const resp = await fetch(endpoint, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(body)
+            });
+
+            if (resp.status === 503 || resp.status === 429) {
+              lastErr = new Error(`Modello ${model} temporaneamente sovraccarico (${resp.status}).`);
+              await new Promise((r) => setTimeout(r, 1500 * attempt));
+              continue;
+            }
+
+            if (!resp.ok) {
+              const errText = await resp.text();
+              throw new Error(`Errore API Gemini (${resp.status}): ${errText.slice(0, 200)}`);
+            }
+            return await resp.json();
+          }
+        } catch (err) {
+          if (String(err.message || "").includes("Failed to fetch")) {
+            lastErr = new Error(
+              `Failed to fetch verso il proxy Apps Script (${proxyUrl}).\n` +
+              `Dettaglio tecnico: ${err.message}`
+            );
+            await new Promise((r) => setTimeout(r, 1200));
+            continue;
+          }
+          if (String(err.message || "").includes("sovraccarico")) {
+            lastErr = err;
+            continue;
+          }
+          throw err;
+        }
+      }
+
+      throw lastErr || new Error("Il modello Gemini è momentaneamente sovraccarico. Riprova tra un minuto.");
+    }
+
     function normalizeRecipeItem(item) {
       return {
         title: item?.title || "",
@@ -1255,9 +1328,9 @@
       multiRecipeBar.classList.remove("hidden");
     }
 
-    async function callGeminiRecipeExtractor({ photoDataUrl = null, audioMedia = null, videoMedia = null, rawText = "" }) {
+    async function callGeminiRecipeExtractor({ photoDataUrls = [], audioMedia = null, videoMedia = null, rawText = "" }) {
       const systemPrompt =
-        `Sei un assistente che digitalizza ricette di famiglia (anche quando su una stessa foto o testo ci sono PIÙ ricette, con parti stampate/a PC e parti scritte a mano in corsivo).\n` +
+        `Sei un assistente che digitalizza ricette di famiglia (anche su più fogli/pagine per la stessa ricetta, oppure con PIÙ ricette sullo stesso foglio o su più fogli, con parti stampate/a PC e parti scritte a mano in corsivo).\n` +
         `Categorie consentite: ${categories.join(", ")}.\n` +
         `Regole dell'utente: ${aiRules}\n\n` +
         `Rispondi ESCLUSIVAMENTE con un oggetto JSON valido con questa struttura:\n` +
@@ -1266,7 +1339,7 @@
         `    {\n` +
         `      "title": "Titolo della ricetta",\n` +
         `      "category": "Una delle categorie consentite",\n` +
-        `      "origin": "Es. Stampata/Bimby oppure Scritto a mano",\n` +
+        `      "origin": "Es. Stampata/Bimby oppure Scritto a mano (2 fogli)",\n` +
         `      "ingredients": "Un ingrediente per riga",\n` +
         `      "steps": "Procedimento ordinato e leggibile",\n` +
         `      "uncertainties": ["Parole o finali scritti a mano dubbi, sbiaditi o troncati, dosi ambigue o interpretazioni"]\n` +
@@ -1276,11 +1349,16 @@
 
       const parts = [{ text: systemPrompt }];
 
-      if (photoDataUrl) {
-        const match = photoDataUrl.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,(.+)$/);
-        if (match) parts.push({ inlineData: { mimeType: match[1], data: match[2] } });
+      if (Array.isArray(photoDataUrls) && photoDataUrls.length > 0) {
+        photoDataUrls.forEach((dataUrl, i) => {
+          const match = dataUrl.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,(.+)$/);
+          if (match) {
+            parts.push({ text: `Foglio ${i + 1}:` });
+            parts.push({ inlineData: { mimeType: match[1], data: match[2] } });
+          }
+        });
         parts.push({
-          text: "Analizza la foto: se ci sono più ricette (es. una stampata e una scritta a mano), separale in voci distinte di 'recipes'. Segnala in 'uncertainties' ogni parola scritta a mano o finale di frase poco chiaro o da verificare."
+          text: "Analizza tutti i fogli forniti: se ci sono più fogli della stessa ricetta, uniscili; se ci sono più ricette distinte, separale in voci distinte di 'recipes'. Segnala in 'uncertainties' ogni parola scritta a mano o finale di frase poco chiaro o da verificare."
         });
       }
 
@@ -1318,19 +1396,19 @@
     }
 
     analyzePhotoBtn.addEventListener("click", async () => {
-      if (!currentPhotoDataUrl) {
-        showAiStatus("Seleziona o scatta prima una foto.", false);
+      if (currentPhotoDataUrls.length === 0) {
+        showAiStatus("Seleziona, trascina o scatta prima almeno una foto.", false);
         return;
       }
       analyzePhotoBtn.disabled = true;
-      showAiStatus("Analisi della foto in corso con l'AI...", true);
+      showAiStatus(`Analisi di ${currentPhotoDataUrls.length} foto in corso con l'AI...`, true);
       try {
-        extractedRecipesQueue = await callGeminiRecipeExtractor({ photoDataUrl: currentPhotoDataUrl });
+        extractedRecipesQueue = await callGeminiRecipeExtractor({ photoDataUrls: currentPhotoDataUrls });
         loadExtractedRecipeAt(0);
         showAiStatus(
           extractedRecipesQueue.length > 1
-            ? `Trovate ${extractedRecipesQueue.length} ricette nella foto! Controlla la prima, verifica i dubbi e salvala; poi passa alla successiva.`
-            : "Foto analizzata: controlla i campi e i dubbi prima di salvare.",
+            ? `Trovate ${extractedRecipesQueue.length} ricette! Controlla la prima, verifica i dubbi e salvala; poi passa alla successiva.`
+            : "Foto analizzate: controlla i campi e i dubbi prima di salvare.",
           true
         );
       } catch (err) {
@@ -1432,10 +1510,10 @@
           `}`;
 
         const parts = [{ text: prompt }];
-        if (currentPhotoDataUrl) {
-          const match = currentPhotoDataUrl.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,(.+)$/);
+        currentPhotoDataUrls.forEach((dataUrl) => {
+          const match = dataUrl.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,(.+)$/);
           if (match) parts.push({ inlineData: { mimeType: match[1], data: match[2] } });
-        }
+        });
 
         const data = await invokeGemini({
           contents: [{ role: "user", parts }],
@@ -1554,15 +1632,14 @@
       renderUncertainties([]);
 
       if (!keepPhotoAndQueue) {
-        currentPhotoDataUrl = null;
+        currentPhotoDataUrls = [];
         currentAudioMedia = null;
         currentVideoMedia = null;
         extractedRecipesQueue = [];
         activeExtractedIndex = 0;
 
         recipePhotoInput.value = "";
-        photoPreview.src = "";
-        photoPreview.classList.add("hidden");
+        renderPhotoPreviews();
 
         recipeAudioInput.value = "";
         audioPreview.src = "";
@@ -1591,8 +1668,9 @@
       const ingredients = document.getElementById("rec-ingredients").value.trim();
       const steps = document.getElementById("rec-steps").value.trim();
 
-      const photoToSave = currentPhotoDataUrl && currentPhotoDataUrl.length < 750000
-        ? currentPhotoDataUrl
+      const firstPhoto = currentPhotoDataUrls[0] || null;
+      const photoToSave = firstPhoto && firstPhoto.length < 750000
+        ? firstPhoto
         : null;
 
       try {
