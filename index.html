@@ -317,8 +317,8 @@
           <div>
             <label for="gemini-model-select">Modello Gemini:</label>
             <select id="gemini-model-select">
-              <option value="gemini-2.5-flash">gemini-2.5-flash (veloce e ottimo su foto/audio/testi)</option>
-              <option value="gemini-2.5-pro">gemini-2.5-pro (più approfondito su calligrafie/video)</option>
+              <option value="gemini-3.8-flash">gemini-3.8-flash (veloce e ottimo su foto/audio/testi)</option>
+              <option value="gemini-3.8-pro">gemini-3.8-pro (più approfondito su calligrafie/video)</option>
             </select>
           </div>
         </div>
@@ -813,7 +813,7 @@
         proxyUrlInput.value = localStorage.getItem("luigina_proxy_url") || "";
         proxySecretInput.value = localStorage.getItem("luigina_proxy_secret") || "";
         localGeminiKeyInput.value = localStorage.getItem("luigina_gemini_key") || "";
-        geminiModelSelect.value = localStorage.getItem("luigina_gemini_model") || "gemini-2.5-flash";
+        geminiModelSelect.value = localStorage.getItem("luigina_gemini_model") || "gemini-3.8-flash";
         setupMsg.classList.add("hidden");
         renderSetupCategories();
         setupCard.classList.remove("hidden");
@@ -949,7 +949,6 @@
       });
     }
 
-    // COMPRESSIONE BILANCIATA: LEGGIBILE PER CALLIGRAFIA E VELOCE IN INVIO
     function readImageAsCompressedDataUrl(file, maxWidth = 1280, quality = 0.78) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -1078,7 +1077,11 @@
       const proxyUrl = (localStorage.getItem("luigina_proxy_url") || "").trim();
       const proxySecret = (localStorage.getItem("luigina_proxy_secret") || "").trim();
       const localKey = (localStorage.getItem("luigina_gemini_key") || "").trim();
-      const model = localStorage.getItem("luigina_gemini_model") || "gemini-2.5-flash";
+      let model = localStorage.getItem("luigina_gemini_model") || "gemini-3.8-flash";
+      if (model.startsWith("gemini-2.5")) {
+        model = model.replace("gemini-2.5", "gemini-3.8");
+        localStorage.setItem("luigina_gemini_model", model);
+      }
 
       if (proxyUrl) {
         if (!proxyUrl.startsWith("https://")) {
@@ -1102,9 +1105,6 @@
         } catch (netErr) {
           throw new Error(
             `Failed to fetch verso il proxy Apps Script (${proxyUrl}).\n` +
-            `Verifica che:\n` +
-            `1) L'Apps Script sia distribuito come Web App con "Chi ha accesso: Chiunque" (e che tu abbia creato una Nuova distribuzione dopo ogni modifica del codice).\n` +
-            `2) L'URL termini con /exec e non ci siano blocchi del browser/rete.\n` +
             `Dettaglio tecnico: ${netErr.message}`
           );
         }
@@ -1200,26 +1200,12 @@
         btn.className = idx === activeExtractedIndex ? "small" : "secondary small";
         btn.textContent = `${idx + 1}. ${rec.title || "Senza titolo"}`;
         btn.addEventListener("click", () => {
-          syncCurrentFormIntoQueue();
           loadExtractedRecipeAt(idx);
         });
         multiRecipeButtons.appendChild(btn);
       });
 
       multiRecipeBar.classList.remove("hidden");
-    }
-
-    function syncCurrentFormIntoQueue() {
-      if (!extractedRecipesQueue[activeExtractedIndex]) return;
-      extractedRecipesQueue[activeExtractedIndex] = {
-        ...extractedRecipesQueue[activeExtractedIndex],
-        title: document.getElementById("rec-title").value.trim(),
-        category: recCategorySelect.value,
-        origin: document.getElementById("rec-origin").value.trim(),
-        ingredients: document.getElementById("rec-ingredients").value.trim(),
-        steps: document.getElementById("rec-steps").value.trim(),
-        uncertainties: [...currentUncertainties]
-      };
     }
 
     async function callGeminiRecipeExtractor({ photoDataUrl = null, audioMedia = null, videoMedia = null, rawText = "" }) {
@@ -1362,7 +1348,6 @@
       }
     });
 
-    // DIALOGO COSTRUTTIVO CON L'AI PER PERFEZIONARE LA RICETTA CORRENTE
     refineAiBtn.addEventListener("click", async () => {
       const instruction = refineInstructionInput.value.trim();
       if (!instruction) {
@@ -1577,7 +1562,6 @@
           createdAt: serverTimestamp()
         });
 
-        // Se c'erano più ricette estratte dalla stessa foto/testo, rimuove quella appena salvata e passa alla prossima
         if (extractedRecipesQueue.length > 1) {
           extractedRecipesQueue.splice(activeExtractedIndex, 1);
           const nextIdx = Math.min(activeExtractedIndex, extractedRecipesQueue.length - 1);
