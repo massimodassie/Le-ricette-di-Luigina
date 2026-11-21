@@ -1074,14 +1074,122 @@
     }
 
     async function invokeGemini({ contents, generationConfig = {}, tools = null }) {
-      const proxyUrl = (localStorage.getItem("luigina_proxy_url") || "").trim();
-      const proxySecret = (localStorage.getItem("luigina_proxy_secret") || "").trim();
-      const localKey = (localStorage.getItem("luigina_gemini_key") || "").trim();
-      let model = localStorage.getItem("luigina_gemini_model") || "gemini-3.8-flash";
-      if (model.startsWith("gemini-2.5")) {
-        model = model.replace("gemini-2.5", "gemini-3.8");
-        localStorage.setItem("luigina_gemini_model", model);
+  const proxyUrl = (localStorage.getItem("luigina_proxy_url") || "").trim();
+  const proxySecret = (localStorage.getItem("luigina_proxy_secret") || "").trim();
+  const localKey = (localStorage.getItem("luigina_gemini_key") || "").trim();
+  let primaryModel = localStorage.getItem("luigina_gemini_model") || "gemini-3.8-flash";
+  if (primaryModel.startsWith("gemini-2.5")) {
+    primaryModel = primaryModel.replace("gemini-2.5", "gemini-3.8");
+    localStorage.setItem("luigina_gemini_model", primaryModel);
+  }
+
+  const fallbackModel = primaryModel === "gemini-3.8-flash" ? "gemini-3.8-pro" : "gemini-3.8-flash";
+  const modelsToTry = [primaryModel, fallbackModel];
+
+  if (!proxyUrl && !localKey) {
+    throw new Error("Configura l'URL Proxy Apps Script oppure la chiave API Gemini nel pannello 'Setup' (Admin).");
+  }
+
+  if (proxyUrl && !proxyUrl.startsWith("https://")) {
+    throw new Error(`URL proxy non valido: ${proxyUrl}`);
+  }
+
+  let lastErr = null;
+
+  for (const model of modelsToTry) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        if (attempt > 1 || model !== primaryModel) {
+          showAiStatus(`Server AI occupato: riprovo con ${model} (tentativo ${attempt})...`, true);
+        }
+
+        if (proxyUrl) {
+          const payload = {
+            secret: proxySecret,
+            model,
+            contents,
+            generationConfig
+          };
+          if (tools) payload.tools = tools;
+
+          const resp = await fetch(proxyUrl, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+          });
+
+          const rawBody = await resp.text();
+          let data;
+          try {
+            data = JSON.parse(rawBody);
+          } catch {
+            throw new Error(`Risposta non JSON dal proxy (${resp.status}): ${rawBody.slice(0, 200)}`);
+          }
+
+          const errMsg = data?.error?.message || data?.error || "";
+          const isOverloaded =
+            resp.status === 503 ||
+            resp.status === 429 ||
+            data?._status === 503 ||
+            data?._status === 429 ||
+            String(errMsg).includes("503") ||
+            String(errMsg).includes("UNAVAILABLE") ||
+            String(errMsg).includes("high demand");
+
+          if (isOverloaded) {
+            lastErr = new Error(`Modello ${model} temporaneamente sovraccarico (503).`);
+            await new Promise((r) => setTimeout(r, 1500 * attempt));
+            continue;
+          }
+
+          if (!resp.ok || data.error) {
+            throw new Error(typeof data.error === "string" ? data.error : JSON.stringify(data.error));
+          }
+
+          return data;
+        } else {
+          const body = { contents, generationConfig };
+          if (tools) body.tools = tools;
+
+          const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(localKey)}`;
+          const resp = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body)
+          });
+
+          if (resp.status === 503 || resp.status === 429) {
+            lastErr = new Error(`Modello ${model} temporaneamente sovraccarico (${resp.status}).`);
+            await new Promise((r) => setTimeout(r, 1500 * attempt));
+            continue;
+          }
+
+          if (!resp.ok) {
+            const errText = await resp.text();
+            throw new Error(`Errore API Gemini (${resp.status}): ${errText.slice(0, 200)}`);
+          }
+          return await resp.json();
+        }
+      } catch (err) {
+        if (String(err.message || "").includes("Failed to fetch")) {
+          lastErr = new Error(
+            `Failed to fetch verso il proxy Apps Script (${proxyUrl}).\n` +
+            `Dettaglio tecnico: ${err.message}`
+          );
+          await new Promise((r) => setTimeout(r, 1200));
+          continue;
+        }
+        if (String(err.message || "").includes("sovraccarico")) {
+          lastErr = err;
+          continue;
+        }
+        throw err;
       }
+    }
+  }
+
+  throw lastErr || new Error("I modelli Gemini sono momentaneamente sovraccarichi. Riprova tra un minuto.");
+}
 
       if (proxyUrl) {
         if (!proxyUrl.startsWith("https://")) {
