@@ -281,9 +281,23 @@
         <label for="ai-rules-input">Istruzioni personalizzate per decifrare e catalogare le ricette:</label>
         <textarea id="ai-rules-input"></textarea>
 
+        <hr style="border: 0; border-top: 1px solid var(--border); margin: 16px 0;" />
+
+        <h3>Collegamento AI (Proxy Apps Script consigliato o Chiave locale)</h3>
+        <div class="row">
+          <div>
+            <label for="proxy-url-input">URL Web App Google Apps Script (la chiave resta lì al sicuro):</label>
+            <input type="url" id="proxy-url-input" placeholder="https://script.google.com/macros/s/.../exec" />
+          </div>
+          <div>
+            <label for="proxy-secret-input">Codice segreto proxy:</label>
+            <input type="password" id="proxy-secret-input" placeholder="Stesso SHARED_SECRET dello script" />
+          </div>
+        </div>
+
         <div class="row" style="margin-top: 12px;">
           <div>
-            <label for="local-gemini-key">Chiave API Gemini (salvata solo su questo dispositivo):</label>
+            <label for="local-gemini-key">Chiave API Gemini alternativa (solo su questo dispositivo, se non usi il proxy):</label>
             <input type="password" id="local-gemini-key" placeholder="AIza..." />
           </div>
           <div>
@@ -301,7 +315,7 @@
         <div id="setup-msg" class="msg ok hidden"></div>
       </div>
 
-      <!-- NUOVA RICETTA + AI (FOTO / AUDIO / VIDEO / TESTO) + VERIFICA DUBBI + DEBUG FACOLTATIVO -->
+      <!-- NUOVA RICETTA + AI + VERIFICA DUBBI + DEBUG FACOLTATIVO -->
       <div id="new-recipe-card" class="card hidden">
         <div class="topbar" style="margin-bottom: 10px;">
           <h2 style="margin: 0;">Nuova ricetta</h2>
@@ -342,7 +356,7 @@
 
         <!-- 3. VIDEO -->
         <div id="panel-video" class="stack hidden" style="margin-bottom: 14px;">
-          <label for="recipe-video-input">Carica un breve video in cui racconti o mostri la ricetta (meglio clip leggere, es. sotto i 15 MB):</label>
+          <label for="recipe-video-input">Carica un breve video in cui racconti o mostri la ricetta (meglio clip leggere sotto i 16 MB):</label>
           <input type="file" id="recipe-video-input" accept="video/*" />
           <video id="video-preview" class="preview-media hidden" controls></video>
           <div>
@@ -353,7 +367,7 @@
         <!-- 4. TESTO LIBERO -->
         <div id="panel-text" class="stack hidden" style="margin-bottom: 14px;">
           <label for="raw-recipe-text">Incolla o scrivi un testo grezzo da far strutturare all'AI (oppure compila direttamente i campi sotto):</label>
-          <textarea id="raw-recipe-text" placeholder="Es. Pasta e fagioli come la fa la mamma: 300g borlotti, 250g pasta mista, sedano, carota, cipolla, rosmarino..."></textarea>
+          <textarea id="raw-recipe-text" placeholder="Es. Pasta e fagioli come la fa la mamma..."></textarea>
           <div>
             <button type="button" id="analyze-text-btn">Struttura testo con AI</button>
           </div>
@@ -395,11 +409,11 @@
             <textarea id="rec-steps" placeholder="Passaggi della preparazione..." required></textarea>
           </div>
 
-          <!-- RICHIESTA FACOLTATIVA DI DEBUG / ANALISI CON RICERCA WEB -->
+          <!-- CONTROLLO / DEBUG FACOLTATIVO -->
           <div id="debug-prompt-box" class="debug-prompt-box">
             <strong>Controllo / Debug ricetta (facoltativo):</strong>
             <div style="font-size: 14px; margin: 4px 0 8px 0;">
-              Vuoi che l'AI analizzi la ricetta — ricercando anche sul web — per segnalare eventuali errori, dosi strane, passaggi mancanti o suggerimenti di miglioramento?
+              Vuoi che l'AI analizzi la ricetta — ricercando anche sul web — per segnalare eventuali errori, dosi strane, passaggi mancanti o suggerimenti?
             </div>
             <div class="row" style="flex: 0 0 auto;">
               <button type="button" id="run-debug-btn" class="secondary small">Sì, fai controllo / debug</button>
@@ -524,8 +538,8 @@
     let allRecipes = [];
 
     let currentPhotoDataUrl = null;
-    let currentAudioMedia = null; // { base64, mimeType }
-    let currentVideoMedia = null; // { base64, mimeType }
+    let currentAudioMedia = null;
+    let currentVideoMedia = null;
     let currentUncertainties = [];
     let currentDebugReport = null;
 
@@ -551,6 +565,8 @@
     const addCatBtn = document.getElementById("add-cat-btn");
     const setupCatList = document.getElementById("setup-cat-list");
     const aiRulesInput = document.getElementById("ai-rules-input");
+    const proxyUrlInput = document.getElementById("proxy-url-input");
+    const proxySecretInput = document.getElementById("proxy-secret-input");
     const localGeminiKeyInput = document.getElementById("local-gemini-key");
     const geminiModelSelect = document.getElementById("gemini-model-select");
     const saveSetupBtn = document.getElementById("save-setup-btn");
@@ -694,7 +710,6 @@
       }
     });
 
-    // IMPOSTAZIONI FIRESTORE
     function listenToSettings() {
       if (unsubscribeSettings) unsubscribeSettings();
       const settingsRef = doc(db, "settings", "general");
@@ -706,6 +721,12 @@
           }
           if (typeof data.aiRules === "string" && data.aiRules.trim()) {
             aiRules = data.aiRules;
+          }
+          if (typeof data.proxyUrl === "string") {
+            localStorage.setItem("luigina_proxy_url", data.proxyUrl.trim());
+          }
+          if (typeof data.proxySecret === "string") {
+            localStorage.setItem("luigina_proxy_secret", data.proxySecret.trim());
           }
         } else {
           categories = [...DEFAULT_CATEGORIES];
@@ -740,12 +761,13 @@
       }
     }
 
-    // SETUP ADMIN
     openSetupBtn.addEventListener("click", () => {
       const opening = setupCard.classList.contains("hidden");
       if (opening) {
         draftCategories = [...categories];
         aiRulesInput.value = aiRules;
+        proxyUrlInput.value = localStorage.getItem("luigina_proxy_url") || "";
+        proxySecretInput.value = localStorage.getItem("luigina_proxy_secret") || "";
         localGeminiKeyInput.value = localStorage.getItem("luigina_gemini_key") || "";
         geminiModelSelect.value = localStorage.getItem("luigina_gemini_model") || "gemini-2.5-flash";
         setupMsg.classList.add("hidden");
@@ -806,19 +828,28 @@
 
     saveSetupBtn.addEventListener("click", async () => {
       setupMsg.classList.add("hidden");
+      const proxyUrl = proxyUrlInput.value.trim();
+      const proxySecret = proxySecretInput.value.trim();
       const keyVal = localGeminiKeyInput.value.trim();
       const modelVal = geminiModelSelect.value;
-      if (keyVal) {
-        localStorage.setItem("luigina_gemini_key", keyVal);
-      } else {
-        localStorage.removeItem("luigina_gemini_key");
-      }
+
+      if (proxyUrl) localStorage.setItem("luigina_proxy_url", proxyUrl);
+      else localStorage.removeItem("luigina_proxy_url");
+
+      if (proxySecret) localStorage.setItem("luigina_proxy_secret", proxySecret);
+      else localStorage.removeItem("luigina_proxy_secret");
+
+      if (keyVal) localStorage.setItem("luigina_gemini_key", keyVal);
+      else localStorage.removeItem("luigina_gemini_key");
+
       localStorage.setItem("luigina_gemini_model", modelVal);
 
       try {
         await setDoc(doc(db, "settings", "general"), {
           categories: draftCategories,
           aiRules: aiRulesInput.value.trim() || DEFAULT_AI_RULES,
+          proxyUrl,
+          proxySecret,
           updatedAt: serverTimestamp(),
           updatedBy: auth.currentUser.uid
         }, { merge: true });
@@ -831,7 +862,6 @@
       }
     });
 
-    // TAB MODALITÀ
     function setInsertMode(mode) {
       tabPhoto.classList.toggle("active", mode === "photo");
       tabAudio.classList.toggle("active", mode === "audio");
@@ -897,7 +927,6 @@
       });
     }
 
-    // FOTO
     recipePhotoInput.addEventListener("change", async (e) => {
       const file = e.target.files?.[0];
       if (!file) return;
@@ -911,7 +940,6 @@
       }
     });
 
-    // REGISTRAZIONE VOCE + FILE AUDIO
     startRecBtn.addEventListener("click", async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -966,12 +994,11 @@
       audioPreview.classList.remove("hidden");
     });
 
-    // VIDEO
     recipeVideoInput.addEventListener("change", async (e) => {
       const file = e.target.files?.[0];
       if (!file) return;
       if (file.size > 16 * 1024 * 1024) {
-        showAiStatus("Video troppo pesante per l'invio diretto dal browser (meglio clip leggere sotto i 16 MB).", false);
+        showAiStatus("Video troppo pesante per l'invio diretto (meglio clip leggere sotto i 16 MB).", false);
         return;
       }
       const converted = await fileToBase64(file);
@@ -1002,18 +1029,57 @@
       aiDoubtsBox.classList.remove("hidden");
     }
 
-    function getGeminiConfig() {
-      const apiKey = (localStorage.getItem("luigina_gemini_key") || "").trim();
+    // CHIAMATA AI TRAMITE PROXY APPS SCRIPT (SE CONFIGURATO) O CHIAVE LOCALE
+    async function invokeGemini({ contents, generationConfig = {}, tools = null }) {
+      const proxyUrl = (localStorage.getItem("luigina_proxy_url") || "").trim();
+      const proxySecret = (localStorage.getItem("luigina_proxy_secret") || "").trim();
+      const localKey = (localStorage.getItem("luigina_gemini_key") || "").trim();
       const model = localStorage.getItem("luigina_gemini_model") || "gemini-2.5-flash";
-      if (!apiKey) {
-        throw new Error("Manca la chiave API Gemini. Aprila e salvala dal pulsante 'Setup' (Admin).");
+
+      if (proxyUrl) {
+        const payload = {
+          secret: proxySecret,
+          model,
+          contents,
+          generationConfig
+        };
+        if (tools) payload.tools = tools;
+
+        const resp = await fetch(proxyUrl, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await resp.json();
+        if (!resp.ok || data.error) {
+          throw new Error(data.error || `Errore proxy (${resp.status})`);
+        }
+        return data;
       }
-      return { apiKey, model };
+
+      if (!localKey) {
+        throw new Error("Configura l'URL Proxy Apps Script (consigliato) oppure la chiave API Gemini nel pannello 'Setup' (Admin).");
+      }
+
+      const body = { contents, generationConfig };
+      if (tools) body.tools = tools;
+
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(localKey)}`;
+      const resp = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+
+      if (!resp.ok) {
+        const errText = await resp.text();
+        throw new Error(`Errore API Gemini (${resp.status}): ${errText.slice(0, 180)}`);
+      }
+      return await resp.json();
     }
 
     async function callGeminiRecipeExtractor({ photoDataUrl = null, audioMedia = null, videoMedia = null, rawText = "" }) {
-      const { apiKey, model } = getGeminiConfig();
-
       const systemPrompt =
         `Sei un assistente che digitalizza ricette di famiglia (da foto scritte a mano o fotocopiate, registrazioni vocali, video o testo).\n` +
         `Categorie consentite: ${categories.join(", ")}.\n` +
@@ -1032,9 +1098,7 @@
 
       if (photoDataUrl) {
         const match = photoDataUrl.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,(.+)$/);
-        if (match) {
-          parts.push({ inlineData: { mimeType: match[1], data: match[2] } });
-        }
+        if (match) parts.push({ inlineData: { mimeType: match[1], data: match[2] } });
         parts.push({ text: "Decifra e cataloga la ricetta presente in questa foto. Indica in 'uncertainties' ogni parola o dose scritta a mano o sbiadita dubbia." });
       }
 
@@ -1052,25 +1116,14 @@
         parts.push({ text: `Testo grezzo della ricetta da strutturare:\n${rawText}` });
       }
 
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
-      const resp = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts }],
-          generationConfig: {
-            responseMimeType: "application/json",
-            temperature: 0.2
-          }
-        })
+      const data = await invokeGemini({
+        contents: [{ role: "user", parts }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          temperature: 0.2
+        }
       });
 
-      if (!resp.ok) {
-        const errText = await resp.text();
-        throw new Error(`Errore API Gemini (${resp.status}): ${errText.slice(0, 180)}`);
-      }
-
-      const data = await resp.json();
       const rawJson = data?.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!rawJson) throw new Error("L'AI non ha restituito un risultato leggibile.");
       return JSON.parse(rawJson);
@@ -1170,7 +1223,6 @@
       }
     });
 
-    // CONTROLLO / DEBUG FACOLTATIVO CON RICERCA WEB
     skipDebugBtn.addEventListener("click", () => {
       debugPromptBox.classList.add("hidden");
     });
@@ -1190,7 +1242,6 @@
       showAiStatus("Controllo / debug della ricetta in corso (con ricerca web)...", true);
 
       try {
-        const { apiKey, model } = getGeminiConfig();
         const debugPrompt =
           `Sei un esperto culinario e revisore di ricette. Analizza questa ricetta verificando anche sul web eventuali incongruenze, ` +
           `dosi fuori scala, passaggi mancanti, sicurezza alimentare (es. conserve/lievitati) o varianti tradizionali.\n` +
@@ -1201,23 +1252,12 @@
           `  "findings": ["Elenco puntato di eventuali errori, dubbi, mancanze o suggerimenti pratici"]\n` +
           `}`;
 
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
-        const resp = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ role: "user", parts: [{ text: debugPrompt }] }],
-            tools: [{ google_search: {} }],
-            generationConfig: { temperature: 0.2 }
-          })
+        const data = await invokeGemini({
+          contents: [{ role: "user", parts: [{ text: debugPrompt }] }],
+          tools: [{ google_search: {} }],
+          generationConfig: { temperature: 0.2 }
         });
 
-        if (!resp.ok) {
-          const errText = await resp.text();
-          throw new Error(`Errore durante il debug (${resp.status}): ${errText.slice(0, 180)}`);
-        }
-
-        const data = await resp.json();
         const rawText = (data?.candidates?.[0]?.content?.parts || [])
           .map((p) => p.text || "")
           .join("\n")
@@ -1321,7 +1361,6 @@
       }
     });
 
-    // ELENCO RICETTE
     function listenToRecipes() {
       if (unsubscribeRecipes) unsubscribeRecipes();
       const q = query(collection(db, "recipes"), orderBy("createdAt", "desc"));
