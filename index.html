@@ -6,42 +6,129 @@
   <title>Le ricette di Luigina</title>
   <style>
     :root {
-      --bg: #faf7f2;
-      --card: #ffffff;
-      --text: #24211e;
-      --muted: #6b645c;
+      --bg: #f6f3ee;
+      --surface: #ffffff;
+      --surface-soft: #fbf9f6;
+      --sidebar-bg: #efe9df;
+      --text: #221f1c;
+      --muted: #665f57;
       --accent: #9e3b24;
       --accent-hover: #7f2d1a;
-      --border: #e5ded3;
-      --warn-bg: #fff5e6;
-      --warn-border: #e6a23c;
-      --ok-bg: #eef7f0;
-      --ok-border: #4caf50;
-      --info-bg: #eef4fb;
-      --info-border: #4a89dc;
+      --accent-soft: #fdf0ec;
+      --border: #dfd7ca;
+      --warn-bg: #fff6e5;
+      --warn-border: #e3a73b;
+      --ok-bg: #edf7f0;
+      --ok-border: #48a860;
+      --info-bg: #eef4fc;
+      --info-border: #558ad6;
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --radius-sm: 9px;
+      --shadow: 0 4px 18px rgba(34, 31, 28, 0.04);
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
       background: var(--bg);
       color: var(--text);
       line-height: 1.5;
     }
     .container {
-      max-width: 920px;
+      width: 100%;
+      max-width: 1440px;
       margin: 0 auto;
-      padding: 16px;
+      padding: 18px 22px;
+    }
+    .login-wrap {
+      max-width: 520px;
+      margin: 48px auto;
+    }
+    .app-shell {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      gap: 22px;
+      align-items: start;
+    }
+    .sidebar {
+      position: sticky;
+      top: 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .brand-box {
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .brand-box h1 {
+      font-size: 21px;
+      margin: 0 0 6px 0;
+      line-height: 1.25;
+    }
+    .user-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .nav-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .nav-btn {
+      width: 100%;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 14px;
+      border-radius: var(--radius-sm);
+      background: var(--surface-soft);
+      color: var(--text);
+      border: 1px solid var(--border);
+      font-weight: 600;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--sidebar-bg);
+    }
+    .nav-btn.primary-nav {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .nav-btn.primary-nav:hover:not(:disabled) {
+      background: var(--accent-hover);
+    }
+    .nav-btn.active-nav {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .main-content {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-width: 0;
     }
     .card {
-      background: var(--card);
+      background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 14px;
+      border-radius: var(--radius-lg);
       padding: 20px;
-      margin-bottom: 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+      box-shadow: var(--shadow);
     }
     h1, h2, h3 { margin-top: 0; }
+    h2 { font-size: 19px; }
+    h3 { font-size: 15px; margin-bottom: 8px; }
     .topbar {
       display: flex;
       flex-wrap: wrap;
@@ -53,14 +140,17 @@
       display: inline-block;
       padding: 3px 10px;
       border-radius: 999px;
-      font-size: 12px;
-      font-weight: 600;
-      background: #f1ebe2;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      background: var(--accent-soft);
       color: var(--accent);
+      border: 1px solid #ecc6bc;
+      width: fit-content;
     }
     input, select, textarea, button {
       font: inherit;
-      border-radius: 10px;
+      border-radius: var(--radius-sm);
       border: 1px solid var(--border);
       padding: 10px 12px;
     }
@@ -69,39 +159,51 @@
       background: #fff;
       color: var(--text);
     }
-    textarea { min-height: 95px; resize: vertical; }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(158, 59, 36, 0.12);
+    }
+    textarea { min-height: 98px; resize: vertical; }
     button {
       cursor: pointer;
       background: var(--accent);
       color: #fff;
       border: none;
       font-weight: 600;
+      transition: background 0.15s, opacity 0.15s;
     }
     button:hover:not(:disabled) { background: var(--accent-hover); }
     button:disabled { opacity: 0.55; cursor: not-allowed; }
     button.secondary {
-      background: #efe9df;
+      background: var(--surface-soft);
       color: var(--text);
       border: 1px solid var(--border);
     }
-    button.secondary:hover:not(:disabled) { background: #e5ddd0; }
+    button.secondary:hover:not(:disabled) { background: var(--sidebar-bg); }
     button.danger {
       background: #b8292f;
-      padding: 6px 10px;
+      padding: 7px 11px;
       font-size: 13px;
     }
     button.danger:hover:not(:disabled) { background: #941e23; }
     button.small {
-      padding: 6px 10px;
+      padding: 7px 11px;
       font-size: 13px;
     }
-    .stack { display: flex; flex-direction: column; gap: 10px; }
-    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-    .row > * { flex: 1 1 180px; }
+    .stack { display: flex; flex-direction: column; gap: 12px; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    .row > * { flex: 1 1 200px; }
+    .split-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.95fr);
+      gap: 16px;
+      align-items: start;
+    }
     .hidden { display: none !important; }
     .msg {
-      padding: 10px 12px;
-      border-radius: 10px;
+      padding: 11px 14px;
+      border-radius: var(--radius-md);
       background: var(--warn-bg);
       border: 1px solid var(--warn-border);
       font-size: 14px;
@@ -124,8 +226,8 @@
       align-items: center;
       padding: 8px 12px;
       border: 1px solid var(--border);
-      border-radius: 10px;
-      background: #fcfaf7;
+      border-radius: var(--radius-sm);
+      background: var(--surface-soft);
     }
     .mode-tabs {
       display: flex;
@@ -140,14 +242,14 @@
     }
     .dropzone {
       border: 2px dashed var(--border);
-      border-radius: 12px;
+      border-radius: var(--radius-md);
       padding: 14px;
-      background: #fcfaf7;
+      background: var(--surface-soft);
       transition: border-color 0.15s, background 0.15s;
     }
     .dropzone.dragover {
       border-color: var(--accent);
-      background: #fff3ee;
+      background: var(--accent-soft);
     }
     .photo-grid {
       display: flex;
@@ -156,9 +258,8 @@
       margin-top: 8px;
     }
     .photo-thumb-wrap {
-      position: relative;
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: var(--radius-sm);
       padding: 6px;
       background: #fff;
     }
@@ -167,27 +268,27 @@
       max-height: 220px;
       border-radius: 8px;
       object-fit: contain;
-      background: #fcfaf7;
+      background: var(--surface-soft);
       display: block;
     }
     .preview-media {
       max-width: 100%;
       max-height: 260px;
-      border-radius: 10px;
+      border-radius: var(--radius-sm);
       border: 1px solid var(--border);
-      background: #fcfaf7;
+      background: var(--surface-soft);
     }
     .multi-bar {
-      background: #f6f1e9;
+      background: var(--sidebar-bg);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: var(--radius-md);
       padding: 10px 14px;
       margin-bottom: 12px;
     }
     .doubts-box {
       background: var(--warn-bg);
       border: 1px solid var(--warn-border);
-      border-radius: 12px;
+      border-radius: var(--radius-md);
       padding: 12px 14px;
     }
     .doubts-box ul, .debug-box ul {
@@ -195,39 +296,47 @@
       padding-left: 18px;
     }
     .dialog-box {
-      background: #faf6ef;
+      background: var(--surface-soft);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      padding: 14px;
     }
     .debug-prompt-box {
       background: var(--info-bg);
       border: 1px solid var(--info-border);
-      border-radius: 12px;
-      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      padding: 14px;
     }
     .debug-box {
       background: #f7f9fc;
       border: 1px solid #b8cde8;
-      border-radius: 12px;
-      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      padding: 14px;
+    }
+    .recipes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+      gap: 12px;
     }
     .recipe-item {
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: var(--radius-md);
       padding: 14px;
-      margin-bottom: 10px;
-      background: #fff;
+      background: var(--surface-soft);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 10px;
     }
     .recipe-meta {
       font-size: 13px;
       color: var(--muted);
-      margin-bottom: 6px;
+      margin-top: 4px;
     }
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.45);
+      background: rgba(24, 21, 18, 0.5);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -236,12 +345,13 @@
     }
     .modal-box {
       background: #fff;
-      border-radius: 14px;
-      max-width: 640px;
+      border-radius: var(--radius-lg);
+      max-width: 720px;
       width: 100%;
       max-height: 88vh;
       overflow-y: auto;
-      padding: 20px;
+      padding: 22px;
+      border: 1px solid var(--border);
     }
     pre {
       white-space: pre-wrap;
@@ -255,12 +365,26 @@
       display: block;
       margin-bottom: 4px;
     }
+    @media (max-width: 900px) {
+      .app-shell {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        position: static;
+      }
+      .split-grid {
+        grid-template-columns: 1fr;
+      }
+      .container {
+        padding: 12px;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <!-- SCHERMATA LOGIN -->
-    <div id="login-view" class="card">
+    <div id="login-view" class="card login-wrap">
       <h1>Le ricette di Luigina</h1>
       <p style="color: var(--muted);">Accedi per consultare o aggiornare l'archivio di famiglia.</p>
 
@@ -279,237 +403,260 @@
       <div id="auth-message" class="msg hidden"></div>
     </div>
 
-    <!-- APP PRINCIPALE -->
-    <div id="app-view" class="hidden">
-      <div class="card topbar">
-        <div>
-          <h1 style="margin-bottom: 4px;">Le ricette di Luigina</h1>
-          <div>
+    <!-- APP PRINCIPALE CON MENU A SINISTRA E LAYOUT ADATTIVO -->
+    <div id="app-view" class="app-shell hidden">
+      <aside class="sidebar">
+        <div class="brand-box">
+          <h1>Le ricette di Luigina</h1>
+          <div class="user-meta">
             <span id="user-display"></span>
             <span id="user-role-badge" class="badge"></span>
           </div>
         </div>
-        <div class="row" style="flex: 0 0 auto;">
-          <button type="button" id="open-new-btn" class="hidden">+ Nuova ricetta</button>
-          <button type="button" id="open-setup-btn" class="secondary hidden">Setup</button>
-          <button type="button" id="logout-btn" class="secondary">Esci</button>
+
+        <nav class="nav-group" aria-label="Menu principale">
+          <button type="button" id="nav-archive-btn" class="nav-btn active-nav">
+            <span>Archivio ricette</span>
+            <span id="sidebar-count" class="badge">0</span>
+          </button>
+          <button type="button" id="open-new-btn" class="nav-btn primary-nav hidden">
+            <span>+ Nuova ricetta</span>
+          </button>
+          <button type="button" id="open-setup-btn" class="nav-btn hidden">
+            <span>Setup (Admin)</span>
+          </button>
+        </nav>
+
+        <div style="padding-top: 8px; border-top: 1px solid var(--border);">
+          <button type="button" id="logout-btn" class="secondary small" style="width: 100%;">Esci</button>
         </div>
-      </div>
+      </aside>
 
-      <!-- PANNELLO SETUP (SOLO ADMIN) -->
-      <div id="setup-card" class="card hidden">
-        <div class="topbar">
-          <h2 style="margin: 0;">Pannello Setup (Admin)</h2>
-          <button type="button" id="close-setup-btn" class="secondary small">Chiudi</button>
-        </div>
-        <p style="color: var(--muted); font-size: 14px;">
-          Personalizza le categorie dell'archivio e le regole di catalogazione AI. Le modifiche si applicano subito a tutti gli utenti.
-        </p>
-
-        <h3>Categorie ricette</h3>
-        <div class="row">
-          <input type="text" id="new-cat-input" placeholder="Nuova categoria (es. Liquori, Salse...)" />
-          <button type="button" id="add-cat-btn" style="flex: 0 0 auto;">+ Aggiungi categoria</button>
-        </div>
-        <div id="setup-cat-list" class="cat-list"></div>
-
-        <hr style="border: 0; border-top: 1px solid var(--border); margin: 16px 0;" />
-
-        <h3>Regole di catalogazione per l'AI</h3>
-        <label for="ai-rules-input">Istruzioni personalizzate per decifrare, separare ricette multiple e catalogare:</label>
-        <textarea id="ai-rules-input"></textarea>
-
-        <hr style="border: 0; border-top: 1px solid var(--border); margin: 16px 0;" />
-
-        <h3>Collegamento AI (Proxy Apps Script o Chiave locale)</h3>
-        <div class="row">
-          <div>
-            <label for="proxy-url-input">URL Web App Google Apps Script:</label>
-            <input type="url" id="proxy-url-input" placeholder="https://script.google.com/macros/s/.../exec" />
-          </div>
-          <div>
-            <label for="proxy-secret-input">Codice segreto proxy:</label>
-            <input type="password" id="proxy-secret-input" placeholder="Stesso SHARED_SECRET dello script" />
-          </div>
-        </div>
-
-        <div class="row" style="margin-top: 12px;">
-          <div>
-            <label for="local-gemini-key">Chiave API Gemini locale (alternativa o test diretto su questo dispositivo):</label>
-            <input type="password" id="local-gemini-key" placeholder="AIza..." />
-          </div>
-          <div>
-            <label for="gemini-model-select">Modello Gemini:</label>
-            <select id="gemini-model-select">
-              <option value="gemini-3.8-flash">gemini-3.8-flash (consigliato su foto, audio e testi)</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="row" style="margin-top: 14px;">
-          <button type="button" id="save-setup-btn">Salva impostazioni</button>
-        </div>
-        <div id="setup-msg" class="msg ok hidden"></div>
-      </div>
-
-      <!-- NUOVA RICETTA + AI + RICOSTA MULTIPLA + DIALOGO + DEBUG FACOLTATIVO -->
-      <div id="new-recipe-card" class="card hidden">
-        <div class="topbar" style="margin-bottom: 10px;">
-          <h2 style="margin: 0;">Nuova ricetta</h2>
-          <button type="button" id="cancel-new-btn" class="secondary small">Chiudi</button>
-        </div>
-
-        <div class="mode-tabs">
-          <button type="button" id="tab-photo" class="secondary small mode-tab active">Foto</button>
-          <button type="button" id="tab-audio" class="secondary small mode-tab">Audio / Voce</button>
-          <button type="button" id="tab-video" class="secondary small mode-tab">Video</button>
-          <button type="button" id="tab-text" class="secondary small mode-tab">Testo / Manuale</button>
-        </div>
-
-        <!-- 1. FOTO (MULTI-FOGLIO + DRAG & DROP) -->
-        <div id="panel-photo" class="stack" style="margin-bottom: 14px;">
-          <div id="photo-dropzone" class="dropzone stack">
-            <label for="recipe-photo-input">
-              Scatta o scegli uno o più fogli (anche fronte/retro o più pagine per la stessa ricetta), oppure trascina qui i file da PC:
-            </label>
-            <input type="file" id="recipe-photo-input" accept="image/*" multiple />
-            <div style="font-size: 12px; color: var(--muted);">
-              Suggerimento: puoi selezionare più immagini insieme oppure trascinarle qui con il mouse.
-            </div>
-            <div id="photo-preview-list" class="photo-grid"></div>
-          </div>
-          <div>
-            <button type="button" id="analyze-photo-btn">Analizza foto con AI</button>
-          </div>
-        </div>
-
-        <!-- 2. AUDIO / VOCE -->
-        <div id="panel-audio" class="stack hidden" style="margin-bottom: 14px;">
-          <label>Registra a voce oppure carica un file audio della ricetta:</label>
-          <div class="row">
-            <button type="button" id="start-rec-btn" class="secondary">Registra voce</button>
-            <button type="button" id="stop-rec-btn" class="secondary" disabled>Ferma registrazione</button>
-          </div>
-          <div id="rec-timer" style="font-size: 13px; color: var(--muted);"></div>
-          <input type="file" id="recipe-audio-input" accept="audio/*" />
-          <audio id="audio-preview" class="preview-media hidden" controls></audio>
-          <div>
-            <button type="button" id="analyze-audio-btn">Analizza audio con AI</button>
-          </div>
-        </div>
-
-        <!-- 3. VIDEO -->
-        <div id="panel-video" class="stack hidden" style="margin-bottom: 14px;">
-          <label for="recipe-video-input">Carica un breve video (meglio clip leggere sotto i 16 MB):</label>
-          <input type="file" id="recipe-video-input" accept="video/*" />
-          <video id="video-preview" class="preview-media hidden" controls></video>
-          <div>
-            <button type="button" id="analyze-video-btn">Analizza video con AI</button>
-          </div>
-        </div>
-
-        <!-- 4. TESTO LIBERO -->
-        <div id="panel-text" class="stack hidden" style="margin-bottom: 14px;">
-          <label for="raw-recipe-text">Incolla o scrivi un testo grezzo da far strutturare all'AI (oppure compila direttamente i campi sotto):</label>
-          <textarea id="raw-recipe-text" placeholder="Incolla qui una o più ricette grezze..."></textarea>
-          <div>
-            <button type="button" id="analyze-text-btn">Struttura testo con AI</button>
-          </div>
-        </div>
-
-        <div id="ai-status-msg" class="msg hidden"></div>
-
-        <!-- SELETTORE SE L'AI TROVA PIÙ RICETTE NELLO STESSO INPUT -->
-        <div id="multi-recipe-bar" class="multi-bar hidden">
+      <main class="main-content">
+        <!-- PANNELLO SETUP (SOLO ADMIN) -->
+        <div id="setup-card" class="card hidden">
           <div class="topbar">
-            <strong id="multi-recipe-label">Ricette rilevate:</strong>
-            <div style="display: flex; gap: 6px; flex-wrap: wrap;" id="multi-recipe-buttons"></div>
+            <h2 style="margin: 0;">Pannello Setup (Admin)</h2>
+            <button type="button" id="close-setup-btn" class="secondary small">Chiudi</button>
           </div>
-        </div>
+          <p style="color: var(--muted); font-size: 14px;">
+            Personalizza le categorie dell'archivio e le regole di catalogazione AI. Le modifiche si applicano subito a tutti gli utenti.
+          </p>
 
-        <!-- DUBBI DI LETTURA / INTERPRETAZIONE -->
-        <div id="ai-doubts-box" class="doubts-box hidden" style="margin-bottom: 14px;">
-          <strong>Punti dubbi o da verificare (calligrafia, parti tagliate/sbiadite, dosi o interpretazioni):</strong>
-          <ul id="ai-doubts-list"></ul>
-        </div>
+          <h3>Categorie ricette</h3>
+          <div class="row">
+            <input type="text" id="new-cat-input" placeholder="Nuova categoria (es. Liquori, Salse...)" />
+            <button type="button" id="add-cat-btn" style="flex: 0 0 auto;">+ Aggiungi categoria</button>
+          </div>
+          <div id="setup-cat-list" class="cat-list"></div>
 
-        <!-- MODULO FINALE DI REVISIONE -->
-        <form id="recipe-form" class="stack">
+          <hr style="border: 0; border-top: 1px solid var(--border); margin: 16px 0;" />
+
+          <h3>Regole di catalogazione per l'AI</h3>
+          <label for="ai-rules-input">Istruzioni personalizzate per decifrare, separare ricette multiple e catalogare:</label>
+          <textarea id="ai-rules-input"></textarea>
+
+          <hr style="border: 0; border-top: 1px solid var(--border); margin: 16px 0;" />
+
+          <h3>Collegamento AI (Proxy Apps Script o Chiave locale)</h3>
           <div class="row">
             <div>
-              <label for="rec-title">Titolo ricetta</label>
-              <input type="text" id="rec-title" placeholder="Es. Cantucci (Clerici)" required />
+              <label for="proxy-url-input">URL Web App Google Apps Script:</label>
+              <input type="url" id="proxy-url-input" placeholder="https://script.google.com/macros/s/.../exec" />
             </div>
             <div>
-              <label for="rec-category">Categoria</label>
-              <select id="rec-category" required></select>
+              <label for="proxy-secret-input">Codice segreto proxy:</label>
+              <input type="password" id="proxy-secret-input" placeholder="Stesso SHARED_SECRET dello script" />
             </div>
           </div>
 
-          <div>
-            <label for="rec-origin">Origine / Note (es. Scritto a mano, Stampa/Bimby...)</label>
-            <input type="text" id="rec-origin" placeholder="Es. Pagina con ricetta stampata e nota a mano" />
-          </div>
-
-          <div>
-            <label for="rec-ingredients">Ingredienti (uno per riga)</label>
-            <textarea id="rec-ingredients" placeholder="Es. 500 g farina&#10;300 g zucchero" required></textarea>
-          </div>
-
-          <div>
-            <label for="rec-steps">Procedimento</label>
-            <textarea id="rec-steps" placeholder="Passaggi della preparazione..." required></textarea>
-          </div>
-
-          <!-- DIALOGO COSTRUTTIVO CON L'AI PER PERFEZIONARE LA RICETTA -->
-          <div class="dialog-box">
-            <label for="refine-instruction-input">Dialoga con l'AI per rifinire o chiarire questa ricetta prima di salvarla:</label>
-            <div class="row">
-              <input type="text" id="refine-instruction-input" placeholder="Es. Completa il procedimento dei cantucci e chiarisci la parola finale 'tostare'..." />
-              <button type="button" id="refine-ai-btn" class="secondary" style="flex: 0 0 auto;">Aggiorna con AI</button>
+          <div class="row" style="margin-top: 12px;">
+            <div>
+              <label for="local-gemini-key">Chiave API Gemini locale (alternativa o test diretto su questo dispositivo):</label>
+              <input type="password" id="local-gemini-key" placeholder="AIza..." />
             </div>
-            <div id="refine-reply-text" style="font-size: 13px; color: var(--muted); margin-top: 6px;"></div>
-          </div>
-
-          <!-- CONTROLLO / DEBUG FACOLTATIVO -->
-          <div id="debug-prompt-box" class="debug-prompt-box">
-            <strong>Controllo / Debug ricetta (facoltativo):</strong>
-            <div style="font-size: 14px; margin: 4px 0 8px 0;">
-              Vuoi che l'AI analizzi la ricetta — ricercando anche sul web — per segnalare eventuali errori, dosi strane, passaggi mancanti o suggerimenti?
-            </div>
-            <div class="row" style="flex: 0 0 auto;">
-              <button type="button" id="run-debug-btn" class="secondary small">Sì, fai controllo / debug</button>
-              <button type="button" id="skip-debug-btn" class="secondary small">No, non serve</button>
+            <div>
+              <label for="gemini-model-select">Modello Gemini:</label>
+              <select id="gemini-model-select">
+                <option value="gemini-3.8-flash">gemini-3.8-flash (consigliato su foto, audio e testi)</option>
+              </select>
             </div>
           </div>
 
-          <div id="debug-result-box" class="debug-box hidden">
-            <strong>Esito controllo / debug ricetta:</strong>
-            <div id="debug-summary" style="margin-top: 6px; font-size: 14px;"></div>
-            <ul id="debug-findings-list"></ul>
+          <div class="row" style="margin-top: 14px;">
+            <button type="button" id="save-setup-btn">Salva impostazioni</button>
           </div>
-
-          <div class="row" style="margin-top: 6px;">
-            <button type="submit" id="save-recipe-btn">Conferma e salva ricetta</button>
-            <button type="button" id="reset-form-btn" class="secondary">Svuota campi</button>
-          </div>
-        </form>
-        <div id="recipe-msg" class="msg hidden"></div>
-      </div>
-
-      <!-- RICERCA E FILTRI -->
-      <div class="card">
-        <div class="row">
-          <input type="search" id="search-input" placeholder="Cerca per titolo, ingrediente o origine..." />
-          <select id="category-filter"></select>
+          <div id="setup-msg" class="msg ok hidden"></div>
         </div>
-      </div>
 
-      <!-- ELENCO RICETTE -->
-      <div class="card">
-        <h2>Archivio ricette (<span id="recipes-count">0</span>)</h2>
-        <div id="recipes-list">Caricamento...</div>
-      </div>
+        <!-- NUOVA / MODIFICA RICETTA + AI + CODA MULTIPLA + DIALOGO + DEBUG FACOLTATIVO -->
+        <div id="new-recipe-card" class="card hidden">
+          <div class="topbar" style="margin-bottom: 12px;">
+            <div>
+              <h2 id="editor-heading" style="margin: 0;">Nuova ricetta</h2>
+              <div id="editing-indicator" class="recipe-meta hidden" style="color: var(--accent); font-weight: 600;"></div>
+            </div>
+            <button type="button" id="cancel-new-btn" class="secondary small">Chiudi</button>
+          </div>
+
+          <div id="acquisition-section">
+            <div class="mode-tabs">
+              <button type="button" id="tab-photo" class="secondary small mode-tab active">Foto</button>
+              <button type="button" id="tab-audio" class="secondary small mode-tab">Audio / Voce</button>
+              <button type="button" id="tab-video" class="secondary small mode-tab">Video</button>
+              <button type="button" id="tab-text" class="secondary small mode-tab">Testo / Manuale</button>
+            </div>
+
+            <!-- 1. FOTO (MULTI-FOGLIO + DRAG & DROP) -->
+            <div id="panel-photo" class="stack" style="margin-bottom: 14px;">
+              <div id="photo-dropzone" class="dropzone stack">
+                <label for="recipe-photo-input">
+                  Scatta o scegli uno o più fogli (anche fronte/retro o più pagine per la stessa ricetta), oppure trascina qui i file da PC:
+                </label>
+                <input type="file" id="recipe-photo-input" accept="image/*" multiple />
+                <div style="font-size: 12px; color: var(--muted);">
+                  Suggerimento: puoi selezionare più immagini insieme oppure trascinarle qui con il mouse.
+                </div>
+                <div id="photo-preview-list" class="photo-grid"></div>
+              </div>
+              <div>
+                <button type="button" id="analyze-photo-btn">Analizza foto con AI</button>
+              </div>
+            </div>
+
+            <!-- 2. AUDIO / VOCE -->
+            <div id="panel-audio" class="stack hidden" style="margin-bottom: 14px;">
+              <label>Registra a voce oppure carica un file audio della ricetta:</label>
+              <div class="row">
+                <button type="button" id="start-rec-btn" class="secondary">Registra voce</button>
+                <button type="button" id="stop-rec-btn" class="secondary" disabled>Ferma registrazione</button>
+              </div>
+              <div id="rec-timer" style="font-size: 13px; color: var(--muted);"></div>
+              <input type="file" id="recipe-audio-input" accept="audio/*" />
+              <audio id="audio-preview" class="preview-media hidden" controls></audio>
+              <div>
+                <button type="button" id="analyze-audio-btn">Analizza audio con AI</button>
+              </div>
+            </div>
+
+            <!-- 3. VIDEO -->
+            <div id="panel-video" class="stack hidden" style="margin-bottom: 14px;">
+              <label for="recipe-video-input">Carica un breve video (meglio clip leggere sotto i 16 MB):</label>
+              <input type="file" id="recipe-video-input" accept="video/*" />
+              <video id="video-preview" class="preview-media hidden" controls></video>
+              <div>
+                <button type="button" id="analyze-video-btn">Analizza video con AI</button>
+              </div>
+            </div>
+
+            <!-- 4. TESTO LIBERO -->
+            <div id="panel-text" class="stack hidden" style="margin-bottom: 14px;">
+              <label for="raw-recipe-text">Incolla o scrivi un testo grezzo da far strutturare all'AI (oppure compila direttamente i campi sotto):</label>
+              <textarea id="raw-recipe-text" placeholder="Incolla qui una o più ricette grezze..."></textarea>
+              <div>
+                <button type="button" id="analyze-text-btn">Struttura testo con AI</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="ai-status-msg" class="msg hidden"></div>
+
+          <!-- SELETTORE SE L'AI TROVA PIÙ RICETTE NELLO STESSO INPUT -->
+          <div id="multi-recipe-bar" class="multi-bar hidden">
+            <div class="topbar">
+              <strong id="multi-recipe-label">Ricette rilevate:</strong>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;" id="multi-recipe-buttons"></div>
+            </div>
+          </div>
+
+          <!-- MODULO FINALE DI REVISIONE + PANNELLO AFFIANCATO DIALOGO/DEBUG -->
+          <form id="recipe-form" class="split-grid">
+            <div class="stack">
+              <div class="row">
+                <div>
+                  <label for="rec-title">Titolo ricetta</label>
+                  <input type="text" id="rec-title" placeholder="Es. Cantucci (Clerici)" required />
+                </div>
+                <div>
+                  <label for="rec-category">Categoria</label>
+                  <select id="rec-category" required></select>
+                </div>
+              </div>
+
+              <div>
+                <label for="rec-origin">Origine / Note (es. Scritto a mano, Stampa/Bimby...)</label>
+                <input type="text" id="rec-origin" placeholder="Es. Pagina con ricetta stampata e nota a mano" />
+              </div>
+
+              <div>
+                <label for="rec-ingredients">Ingredienti (uno per riga)</label>
+                <textarea id="rec-ingredients" placeholder="Es. 500 g farina&#10;300 g zucchero" required></textarea>
+              </div>
+
+              <div>
+                <label for="rec-steps">Procedimento</label>
+                <textarea id="rec-steps" placeholder="Passaggi della preparazione..." style="min-height: 130px;" required></textarea>
+              </div>
+
+              <div class="row" style="margin-top: 4px;">
+                <button type="submit" id="save-recipe-btn">Conferma e salva ricetta</button>
+                <button type="button" id="reset-form-btn" class="secondary">Svuota campi</button>
+              </div>
+            </div>
+
+            <div class="stack">
+              <!-- DUBBI DI LETTURA / INTERPRETAZIONE -->
+              <div id="ai-doubts-box" class="doubts-box hidden">
+                <strong>Punti dubbi o da verificare:</strong>
+                <ul id="ai-doubts-list"></ul>
+              </div>
+
+              <!-- DIALOGO COSTRUTTIVO CON L'AI PER PERFEZIONARE LA RICETTA -->
+              <div class="dialog-box stack">
+                <label for="refine-instruction-input">Dialoga con l'AI per rifinire o chiarire questa ricetta:</label>
+                <input type="text" id="refine-instruction-input" placeholder="Es. Completa il procedimento o chiarisci una parola dubbia..." />
+                <div>
+                  <button type="button" id="refine-ai-btn" class="secondary small">Aggiorna con AI</button>
+                </div>
+                <div id="refine-reply-text" style="font-size: 13px; color: var(--muted);"></div>
+              </div>
+
+              <!-- CONTROLLO / DEBUG FACOLTATIVO -->
+              <div id="debug-prompt-box" class="debug-prompt-box">
+                <strong>Controllo / Debug ricetta (facoltativo):</strong>
+                <div style="font-size: 13px; margin: 6px 0 10px 0;">
+                  Vuoi che l'AI analizzi la ricetta — anche in un secondo momento modificandola — per segnalare dosi strane, passaggi mancanti o suggerimenti?
+                </div>
+                <div class="row">
+                  <button type="button" id="run-debug-btn" class="secondary small">Sì, fai controllo / debug</button>
+                  <button type="button" id="skip-debug-btn" class="secondary small">No, non serve</button>
+                </div>
+              </div>
+
+              <div id="debug-result-box" class="debug-box hidden">
+                <strong>Esito controllo / debug ricetta:</strong>
+                <div id="debug-summary" style="margin-top: 6px; font-size: 14px;"></div>
+                <ul id="debug-findings-list"></ul>
+              </div>
+            </div>
+          </form>
+          <div id="recipe-msg" class="msg hidden"></div>
+        </div>
+
+        <!-- RICERCA E FILTRI -->
+        <div class="card">
+          <div class="row">
+            <input type="search" id="search-input" placeholder="Cerca per titolo, ingrediente o origine..." />
+            <select id="category-filter"></select>
+          </div>
+        </div>
+
+        <!-- ELENCO RICETTE -->
+        <div class="card">
+          <h2>Archivio ricette (<span id="recipes-count">0</span>)</h2>
+          <div id="recipes-list" class="recipes-grid">Caricamento...</div>
+        </div>
+      </main>
     </div>
   </div>
 
@@ -521,7 +668,7 @@
         <button type="button" id="close-modal-btn" class="secondary small">Chiudi</button>
       </div>
       <div id="detail-meta" class="recipe-meta"></div>
-      <img id="detail-photo" class="preview-img hidden" alt="Foto originale ricetta" style="margin-bottom: 12px;" />
+      <img id="detail-photo" class="preview-img hidden" alt="Foto originale ricetta" style="margin: 12px 0;" />
       <h3>Ingredienti</h3>
       <pre id="detail-ingredients"></pre>
       <h3>Procedimento</h3>
@@ -553,6 +700,7 @@
       doc,
       getDoc,
       setDoc,
+      updateDoc,
       collection,
       addDoc,
       deleteDoc,
@@ -601,6 +749,9 @@
     let aiRules = DEFAULT_AI_RULES;
     let allRecipes = [];
 
+    let editingRecipeId = null;
+    let editingRecipePhotoDataUrl = null;
+
     let currentPhotoDataUrls = [];
     let currentAudioMedia = null;
     let currentVideoMedia = null;
@@ -624,6 +775,8 @@
     const userDisplay = document.getElementById("user-display");
     const userRoleBadge = document.getElementById("user-role-badge");
 
+    const navArchiveBtn = document.getElementById("nav-archive-btn");
+    const sidebarCount = document.getElementById("sidebar-count");
     const openNewBtn = document.getElementById("open-new-btn");
     const openSetupBtn = document.getElementById("open-setup-btn");
     const setupCard = document.getElementById("setup-card");
@@ -640,7 +793,12 @@
     const setupMsg = document.getElementById("setup-msg");
 
     const newRecipeCard = document.getElementById("new-recipe-card");
+    const editorHeading = document.getElementById("editor-heading");
+    const editingIndicator = document.getElementById("editing-indicator");
+    const acquisitionSection = document.getElementById("acquisition-section");
     const cancelNewBtn = document.getElementById("cancel-new-btn");
+    const saveRecipeBtn = document.getElementById("save-recipe-btn");
+
     const tabPhoto = document.getElementById("tab-photo");
     const tabAudio = document.getElementById("tab-audio");
     const tabVideo = document.getElementById("tab-video");
@@ -700,6 +858,19 @@
 
     const detailModal = document.getElementById("detail-modal");
     const closeModalBtn = document.getElementById("close-modal-btn");
+
+    function canEditRecipes() {
+      return currentRole === "admin" || currentRole === "editor";
+    }
+
+    function updateNavActiveState() {
+      openNewBtn.classList.toggle("active-nav", !newRecipeCard.classList.contains("hidden"));
+      openSetupBtn.classList.toggle("active-nav", !setupCard.classList.contains("hidden"));
+      navArchiveBtn.classList.toggle(
+        "active-nav",
+        newRecipeCard.classList.contains("hidden") && setupCard.classList.contains("hidden")
+      );
+    }
 
     function showAuthMsg(text) {
       authMessage.textContent = text;
@@ -762,7 +933,7 @@
         userDisplay.textContent = profile.name || user.email;
         userRoleBadge.textContent = currentRole.toUpperCase();
 
-        if (currentRole === "admin" || currentRole === "editor") {
+        if (canEditRecipes()) {
           openNewBtn.classList.remove("hidden");
         } else {
           openNewBtn.classList.add("hidden");
@@ -778,12 +949,20 @@
 
         loginView.classList.add("hidden");
         appView.classList.remove("hidden");
+        updateNavActiveState();
         listenToSettings();
         listenToRecipes();
       } catch (err) {
         console.error(err);
         showAuthMsg("Errore nel controllo del profilo utente.");
       }
+    });
+
+    navArchiveBtn.addEventListener("click", () => {
+      newRecipeCard.classList.add("hidden");
+      setupCard.classList.add("hidden");
+      updateNavActiveState();
+      searchInput.scrollIntoView({ behavior: "smooth", block: "nearest" });
     });
 
     function listenToSettings() {
@@ -838,6 +1017,7 @@
     }
 
     openSetupBtn.addEventListener("click", () => {
+      if (currentRole !== "admin") return;
       const opening = setupCard.classList.contains("hidden");
       if (opening) {
         draftCategories = [...categories];
@@ -853,9 +1033,13 @@
       } else {
         setupCard.classList.add("hidden");
       }
+      updateNavActiveState();
     });
 
-    closeSetupBtn.addEventListener("click", () => setupCard.classList.add("hidden"));
+    closeSetupBtn.addEventListener("click", () => {
+      setupCard.classList.add("hidden");
+      updateNavActiveState();
+    });
 
     function renderSetupCategories() {
       setupCatList.innerHTML = "";
@@ -956,13 +1140,82 @@
     tabVideo.addEventListener("click", () => setInsertMode("video"));
     tabText.addEventListener("click", () => setInsertMode("text"));
 
+    function setEditorMode(isEditing, recipe = null) {
+      if (isEditing && recipe) {
+        editingRecipeId = recipe.id;
+        editingRecipePhotoDataUrl = recipe.photoDataUrl || null;
+        editorHeading.textContent = "Modifica ricetta";
+        editingIndicator.textContent = `Stai modificando "${recipe.title || "Senza titolo"}" — puoi anche rilanciare il controllo / debug o dialogare con l'AI.`;
+        editingIndicator.classList.remove("hidden");
+        acquisitionSection.classList.add("hidden");
+        saveRecipeBtn.textContent = "Salva modifiche";
+
+        document.getElementById("rec-title").value = recipe.title || "";
+        syncCategoryDropdowns();
+        recCategorySelect.value = categories.includes(recipe.category)
+          ? recipe.category
+          : (categories[categories.length - 1] || "");
+        document.getElementById("rec-origin").value = recipe.origin || "";
+        document.getElementById("rec-ingredients").value = recipe.ingredients || "";
+        document.getElementById("rec-steps").value = recipe.steps || "";
+
+        renderUncertainties(recipe.uncertainties || []);
+        refineInstructionInput.value = "";
+        refineReplyText.textContent = "";
+
+        if (recipe.debugReport && (recipe.debugReport.summary || (recipe.debugReport.findings && recipe.debugReport.findings.length > 0))) {
+          currentDebugReport = {
+            summary: recipe.debugReport.summary || "",
+            findings: Array.isArray(recipe.debugReport.findings) ? [...recipe.debugReport.findings] : []
+          };
+          debugSummary.textContent = currentDebugReport.summary;
+          debugFindingsList.innerHTML = "";
+          if (currentDebugReport.findings.length === 0) {
+            const li = document.createElement("li");
+            li.textContent = "Nessuna criticità rilevata: la ricetta appare coerente.";
+            debugFindingsList.appendChild(li);
+          } else {
+            currentDebugReport.findings.forEach((f) => {
+              const li = document.createElement("li");
+              li.textContent = f;
+              debugFindingsList.appendChild(li);
+            });
+          }
+          debugResultBox.classList.remove("hidden");
+        } else {
+          currentDebugReport = null;
+          debugResultBox.classList.add("hidden");
+        }
+        debugPromptBox.classList.remove("hidden");
+      } else {
+        editingRecipeId = null;
+        editingRecipePhotoDataUrl = null;
+        editorHeading.textContent = "Nuova ricetta";
+        editingIndicator.classList.add("hidden");
+        acquisitionSection.classList.remove("hidden");
+        saveRecipeBtn.textContent = "Conferma e salva ricetta";
+      }
+    }
+
     openNewBtn.addEventListener("click", () => {
-      newRecipeCard.classList.toggle("hidden");
-      setupCard.classList.add("hidden");
-      recipeMsg.classList.add("hidden");
+      if (!canEditRecipes()) return;
+      const opening = newRecipeCard.classList.contains("hidden");
+      if (opening) {
+        clearRecipeForm(false);
+        setEditorMode(false);
+        newRecipeCard.classList.remove("hidden");
+        setupCard.classList.add("hidden");
+        recipeMsg.classList.add("hidden");
+      } else {
+        newRecipeCard.classList.add("hidden");
+      }
+      updateNavActiveState();
     });
 
-    cancelNewBtn.addEventListener("click", () => newRecipeCard.classList.add("hidden"));
+    cancelNewBtn.addEventListener("click", () => {
+      newRecipeCard.classList.add("hidden");
+      updateNavActiveState();
+    });
 
     function fileToBase64(file) {
       return new Promise((resolve, reject) => {
@@ -1043,7 +1296,6 @@
       recipePhotoInput.value = "";
     });
 
-    // DRAG AND DROP FOTO DA PC
     ["dragenter", "dragover"].forEach((evName) => {
       photoDropzone.addEventListener(evName, (e) => {
         e.preventDefault();
@@ -1171,10 +1423,10 @@
 
       let lastErr = null;
 
-      for (let attempt = 1; attempt <= 3; attempt++) {
+      for (let attempt = 1; attempt <= 4; attempt++) {
         try {
           if (attempt > 1) {
-            showAiStatus(`Server AI occupato: nuovo tentativo ${attempt} di 3...`, true);
+            showAiStatus(`Server AI occupato: nuovo tentativo ${attempt} di 4...`, true);
           }
 
           if (proxyUrl) {
@@ -1212,7 +1464,7 @@
 
             if (isOverloaded) {
               lastErr = new Error(`Modello ${model} temporaneamente sovraccarico (503).`);
-              await new Promise((r) => setTimeout(r, 1500 * attempt));
+              await new Promise((r) => setTimeout(r, 2500 * attempt));
               continue;
             }
 
@@ -1234,7 +1486,7 @@
 
             if (resp.status === 503 || resp.status === 429) {
               lastErr = new Error(`Modello ${model} temporaneamente sovraccarico (${resp.status}).`);
-              await new Promise((r) => setTimeout(r, 1500 * attempt));
+              await new Promise((r) => setTimeout(r, 2500 * attempt));
               continue;
             }
 
@@ -1250,7 +1502,7 @@
               `Failed to fetch verso il proxy Apps Script (${proxyUrl}).\n` +
               `Dettaglio tecnico: ${err.message}`
             );
-            await new Promise((r) => setTimeout(r, 1200));
+            await new Promise((r) => setTimeout(r, 1400));
             continue;
           }
           if (String(err.message || "").includes("sovraccarico")) {
@@ -1613,7 +1865,7 @@
         }
         debugResultBox.classList.remove("hidden");
         debugPromptBox.classList.add("hidden");
-        showAiStatus("Controllo / debug completato: puoi perfezionare con l'AI o salvare.", true);
+        showAiStatus("Controllo / debug completato: salva la ricetta per conservare l'esito.", true);
       } catch (err) {
         console.error(err);
         showAiStatus(err.message || "Errore durante il controllo della ricetta.", false);
@@ -1656,10 +1908,18 @@
       }
     }
 
-    resetFormBtn.addEventListener("click", () => clearRecipeForm(false));
+    resetFormBtn.addEventListener("click", () => {
+      if (editingRecipeId) {
+        const existing = allRecipes.find((r) => r.id === editingRecipeId);
+        if (existing) setEditorMode(true, existing);
+      } else {
+        clearRecipeForm(false);
+      }
+    });
 
     recipeForm.addEventListener("submit", async (e) => {
       e.preventDefault();
+      if (!canEditRecipes()) return;
       recipeMsg.classList.add("hidden");
 
       const title = document.getElementById("rec-title").value.trim();
@@ -1671,31 +1931,48 @@
       const firstPhoto = currentPhotoDataUrls[0] || null;
       const photoToSave = firstPhoto && firstPhoto.length < 750000
         ? firstPhoto
-        : null;
+        : editingRecipePhotoDataUrl;
+
+      const payload = {
+        title,
+        category,
+        origin,
+        ingredients,
+        steps,
+        photoDataUrl: photoToSave || null,
+        uncertainties: currentUncertainties,
+        debugReport: currentDebugReport
+      };
 
       try {
-        await addDoc(collection(db, "recipes"), {
-          title,
-          category,
-          origin,
-          ingredients,
-          steps,
-          photoDataUrl: photoToSave,
-          uncertainties: currentUncertainties,
-          debugReport: currentDebugReport,
-          createdBy: auth.currentUser.uid,
-          createdAt: serverTimestamp()
-        });
-
-        if (extractedRecipesQueue.length > 1) {
-          extractedRecipesQueue.splice(activeExtractedIndex, 1);
-          const nextIdx = Math.min(activeExtractedIndex, extractedRecipesQueue.length - 1);
-          clearRecipeForm(true);
-          loadExtractedRecipeAt(nextIdx);
-          showAiStatus(`Ricetta "${title}" salvata! Ora rivedi e salva la prossima (${extractedRecipesQueue.length} rimaste).`, true);
-        } else {
+        if (editingRecipeId) {
+          await updateDoc(doc(db, "recipes", editingRecipeId), {
+            ...payload,
+            updatedAt: serverTimestamp(),
+            updatedBy: auth.currentUser.uid
+          });
           clearRecipeForm(false);
+          setEditorMode(false);
           newRecipeCard.classList.add("hidden");
+          updateNavActiveState();
+        } else {
+          await addDoc(collection(db, "recipes"), {
+            ...payload,
+            createdBy: auth.currentUser.uid,
+            createdAt: serverTimestamp()
+          });
+
+          if (extractedRecipesQueue.length > 1) {
+            extractedRecipesQueue.splice(activeExtractedIndex, 1);
+            const nextIdx = Math.min(activeExtractedIndex, extractedRecipesQueue.length - 1);
+            clearRecipeForm(true);
+            loadExtractedRecipeAt(nextIdx);
+            showAiStatus(`Ricetta "${title}" salvata! Ora rivedi e salva la prossima (${extractedRecipesQueue.length} rimaste).`, true);
+          } else {
+            clearRecipeForm(false);
+            newRecipeCard.classList.add("hidden");
+            updateNavActiveState();
+          }
         }
       } catch (err) {
         console.error(err);
@@ -1728,6 +2005,7 @@
       });
 
       recipesCount.textContent = filtered.length;
+      sidebarCount.textContent = allRecipes.length;
 
       if (filtered.length === 0) {
         recipesList.innerHTML = "<p style='color: var(--muted);'>Nessuna ricetta trovata.</p>";
@@ -1740,17 +2018,17 @@
         div.className = "recipe-item";
 
         const metaText = [r.category, r.origin].filter(Boolean).join(" • ");
+        const hasDebugBadge = r.debugReport && r.debugReport.summary ? " • Debug salvato" : "";
 
         div.innerHTML = `
-          <div class="topbar">
-            <div>
-              <strong>${escapeHtml(r.title || "Senza titolo")}</strong>
-              <div class="recipe-meta">${escapeHtml(metaText)}</div>
-            </div>
-            <div style="display: flex; gap: 8px; align-items: center;">
-              <button type="button" class="secondary open-detail-btn" style="padding: 6px 10px; font-size: 13px;">Apri</button>
-              ${currentRole === "admin" ? `<button type="button" class="danger del-btn">Elimina</button>` : ""}
-            </div>
+          <div>
+            <strong>${escapeHtml(r.title || "Senza titolo")}</strong>
+            <div class="recipe-meta">${escapeHtml(metaText + hasDebugBadge)}</div>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <button type="button" class="secondary small open-detail-btn">Apri</button>
+            ${canEditRecipes() ? `<button type="button" class="secondary small edit-btn">Modifica</button>` : ""}
+            ${currentRole === "admin" ? `<button type="button" class="danger del-btn">Elimina</button>` : ""}
           </div>
         `;
 
@@ -1801,6 +2079,20 @@
 
           detailModal.classList.remove("hidden");
         });
+
+        const editBtn = div.querySelector(".edit-btn");
+        if (editBtn) {
+          editBtn.addEventListener("click", () => {
+            if (!canEditRecipes()) return;
+            clearRecipeForm(false);
+            setEditorMode(true, r);
+            newRecipeCard.classList.remove("hidden");
+            setupCard.classList.add("hidden");
+            recipeMsg.classList.add("hidden");
+            updateNavActiveState();
+            newRecipeCard.scrollIntoView({ behavior: "smooth", block: "start" });
+          });
+        }
 
         const delBtn = div.querySelector(".del-btn");
         if (delBtn) {
