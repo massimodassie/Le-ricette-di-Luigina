@@ -17,6 +17,8 @@
       --warn-border: #e6a23c;
       --ok-bg: #eef7f0;
       --ok-border: #4caf50;
+      --info-bg: #eef4fb;
+      --info-border: #4a89dc;
     }
     * { box-sizing: border-box; }
     body {
@@ -27,7 +29,7 @@
       line-height: 1.5;
     }
     .container {
-      max-width: 860px;
+      max-width: 900px;
       margin: 0 auto;
       padding: 16px;
     }
@@ -67,7 +69,7 @@
       background: #fff;
       color: var(--text);
     }
-    textarea { min-height: 90px; resize: vertical; }
+    textarea { min-height: 95px; resize: vertical; }
     button {
       cursor: pointer;
       background: var(--accent);
@@ -75,21 +77,22 @@
       border: none;
       font-weight: 600;
     }
-    button:hover { background: var(--accent-hover); }
+    button:hover:not(:disabled) { background: var(--accent-hover); }
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
     button.secondary {
       background: #efe9df;
       color: var(--text);
       border: 1px solid var(--border);
     }
-    button.secondary:hover { background: #e5ddd0; }
+    button.secondary:hover:not(:disabled) { background: #e5ddd0; }
     button.danger {
       background: #b8292f;
       padding: 6px 10px;
       font-size: 13px;
     }
-    button.danger:hover { background: #941e23; }
+    button.danger:hover:not(:disabled) { background: #941e23; }
     button.small {
-      padding: 5px 9px;
+      padding: 6px 10px;
       font-size: 13px;
     }
     .stack { display: flex; flex-direction: column; gap: 10px; }
@@ -123,6 +126,54 @@
       border-radius: 10px;
       background: #fcfaf7;
     }
+    .mode-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .mode-tab.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .preview-img {
+      max-width: 100%;
+      max-height: 280px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      object-fit: contain;
+      background: #fcfaf7;
+    }
+    .preview-media {
+      max-width: 100%;
+      max-height: 260px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #fcfaf7;
+    }
+    .doubts-box {
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-border);
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
+    .doubts-box ul, .debug-box ul {
+      margin: 6px 0 0 0;
+      padding-left: 18px;
+    }
+    .debug-prompt-box {
+      background: var(--info-bg);
+      border: 1px solid var(--info-border);
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
+    .debug-box {
+      background: #f7f9fc;
+      border: 1px solid #b8cde8;
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
     .recipe-item {
       border: 1px solid var(--border);
       border-radius: 12px;
@@ -148,7 +199,7 @@
     .modal-box {
       background: #fff;
       border-radius: 14px;
-      max-width: 600px;
+      max-width: 640px;
       width: 100%;
       max-height: 88vh;
       overflow-y: auto;
@@ -214,7 +265,7 @@
           <button type="button" id="close-setup-btn" class="secondary small">Chiudi</button>
         </div>
         <p style="color: var(--muted); font-size: 14px;">
-          Personalizza le categorie dell'archivio e le regole di catalogazione. Le modifiche si applicano subito a tutti gli utenti.
+          Personalizza le categorie dell'archivio e le regole di catalogazione AI. Le modifiche si applicano subito a tutti gli utenti.
         </p>
 
         <h3>Categorie ricette</h3>
@@ -227,12 +278,21 @@
         <hr style="border: 0; border-top: 1px solid var(--border); margin: 16px 0;" />
 
         <h3>Regole di catalogazione per l'AI</h3>
-        <label for="ai-rules-input">Istruzioni personalizzate (verranno usate quando scatti la foto o incolli un testo):</label>
-        <textarea id="ai-rules-input" placeholder="Es. Classifica marmellate e sottaceti in Conserve. Segnala ogni parola scritta a mano poco leggibile."></textarea>
+        <label for="ai-rules-input">Istruzioni personalizzate per decifrare e catalogare le ricette:</label>
+        <textarea id="ai-rules-input"></textarea>
 
-        <div style="margin-top: 12px;">
-          <label for="local-gemini-key">Chiave API Gemini (salvata solo su questo dispositivo, mai inviata su GitHub):</label>
-          <input type="password" id="local-gemini-key" placeholder="AIza..." />
+        <div class="row" style="margin-top: 12px;">
+          <div>
+            <label for="local-gemini-key">Chiave API Gemini (salvata solo su questo dispositivo):</label>
+            <input type="password" id="local-gemini-key" placeholder="AIza..." />
+          </div>
+          <div>
+            <label for="gemini-model-select">Modello Gemini:</label>
+            <select id="gemini-model-select">
+              <option value="gemini-2.5-flash">gemini-2.5-flash (veloce, ottimo su foto/audio/testi)</option>
+              <option value="gemini-2.5-pro">gemini-2.5-pro (più approfondito su calligrafie/video)</option>
+            </select>
+          </div>
         </div>
 
         <div class="row" style="margin-top: 14px;">
@@ -241,20 +301,121 @@
         <div id="setup-msg" class="msg ok hidden"></div>
       </div>
 
-      <!-- FORM NUOVA RICETTA BASE -->
+      <!-- NUOVA RICETTA + AI (FOTO / AUDIO / VIDEO / TESTO) + VERIFICA DUBBI + DEBUG FACOLTATIVO -->
       <div id="new-recipe-card" class="card hidden">
-        <h2>Nuova ricetta</h2>
+        <div class="topbar" style="margin-bottom: 10px;">
+          <h2 style="margin: 0;">Nuova ricetta</h2>
+          <button type="button" id="cancel-new-btn" class="secondary small">Chiudi</button>
+        </div>
+
+        <div class="mode-tabs">
+          <button type="button" id="tab-photo" class="secondary small mode-tab active">Foto</button>
+          <button type="button" id="tab-audio" class="secondary small mode-tab">Audio / Voce</button>
+          <button type="button" id="tab-video" class="secondary small mode-tab">Video</button>
+          <button type="button" id="tab-text" class="secondary small mode-tab">Testo / Manuale</button>
+        </div>
+
+        <!-- 1. FOTO -->
+        <div id="panel-photo" class="stack" style="margin-bottom: 14px;">
+          <label for="recipe-photo-input">Scatta una foto o scegli un'immagine (foglio scritto a mano o fotocopia):</label>
+          <input type="file" id="recipe-photo-input" accept="image/*" capture="environment" />
+          <img id="photo-preview" class="preview-img hidden" alt="Anteprima ricetta" />
+          <div>
+            <button type="button" id="analyze-photo-btn">Analizza foto con AI</button>
+          </div>
+        </div>
+
+        <!-- 2. AUDIO / VOCE -->
+        <div id="panel-audio" class="stack hidden" style="margin-bottom: 14px;">
+          <label>Registra a voce oppure carica un file audio della ricetta:</label>
+          <div class="row">
+            <button type="button" id="start-rec-btn" class="secondary">Registra voce</button>
+            <button type="button" id="stop-rec-btn" class="secondary" disabled>Ferma registrazione</button>
+          </div>
+          <div id="rec-timer" style="font-size: 13px; color: var(--muted);"></div>
+          <input type="file" id="recipe-audio-input" accept="audio/*" />
+          <audio id="audio-preview" class="preview-media hidden" controls></audio>
+          <div>
+            <button type="button" id="analyze-audio-btn">Analizza audio con AI</button>
+          </div>
+        </div>
+
+        <!-- 3. VIDEO -->
+        <div id="panel-video" class="stack hidden" style="margin-bottom: 14px;">
+          <label for="recipe-video-input">Carica un breve video in cui racconti o mostri la ricetta (meglio clip leggere, es. sotto i 15 MB):</label>
+          <input type="file" id="recipe-video-input" accept="video/*" />
+          <video id="video-preview" class="preview-media hidden" controls></video>
+          <div>
+            <button type="button" id="analyze-video-btn">Analizza video con AI</button>
+          </div>
+        </div>
+
+        <!-- 4. TESTO LIBERO -->
+        <div id="panel-text" class="stack hidden" style="margin-bottom: 14px;">
+          <label for="raw-recipe-text">Incolla o scrivi un testo grezzo da far strutturare all'AI (oppure compila direttamente i campi sotto):</label>
+          <textarea id="raw-recipe-text" placeholder="Es. Pasta e fagioli come la fa la mamma: 300g borlotti, 250g pasta mista, sedano, carota, cipolla, rosmarino..."></textarea>
+          <div>
+            <button type="button" id="analyze-text-btn">Struttura testo con AI</button>
+          </div>
+        </div>
+
+        <div id="ai-status-msg" class="msg hidden"></div>
+
+        <!-- DUBBI DI LETTURA / INTERPRETAZIONE -->
+        <div id="ai-doubts-box" class="doubts-box hidden" style="margin-bottom: 14px;">
+          <strong>Punti dubbi o da verificare (calligrafia, audio, dosi o parti incerte):</strong>
+          <ul id="ai-doubts-list"></ul>
+        </div>
+
+        <!-- MODULO FINALE DI REVISIONE -->
         <form id="recipe-form" class="stack">
           <div class="row">
-            <input type="text" id="rec-title" placeholder="Titolo ricetta (es. Ragù alla veneta)" required />
-            <select id="rec-category" required></select>
+            <div>
+              <label for="rec-title">Titolo ricetta</label>
+              <input type="text" id="rec-title" placeholder="Es. Ragù alla veneta" required />
+            </div>
+            <div>
+              <label for="rec-category">Categoria</label>
+              <select id="rec-category" required></select>
+            </div>
           </div>
-          <input type="text" id="rec-origin" placeholder="Origine / Note (es. Quaderno scritto a mano, Zia...)" />
-          <textarea id="rec-ingredients" placeholder="Ingredienti (uno per riga)" required></textarea>
-          <textarea id="rec-steps" placeholder="Procedimento" required></textarea>
-          <div class="row">
-            <button type="submit">Salva ricetta</button>
-            <button type="button" id="cancel-new-btn" class="secondary">Annulla</button>
+
+          <div>
+            <label for="rec-origin">Origine / Note (es. Quaderno scritto a mano, Audio mamma...)</label>
+            <input type="text" id="rec-origin" placeholder="Es. Quaderno scritto a mano" />
+          </div>
+
+          <div>
+            <label for="rec-ingredients">Ingredienti (uno per riga)</label>
+            <textarea id="rec-ingredients" placeholder="Es. 500 g farina 00&#10;3 uova" required></textarea>
+          </div>
+
+          <div>
+            <label for="rec-steps">Procedimento</label>
+            <textarea id="rec-steps" placeholder="Passaggi della preparazione..." required></textarea>
+          </div>
+
+          <!-- RICHIESTA FACOLTATIVA DI DEBUG / ANALISI CON RICERCA WEB -->
+          <div id="debug-prompt-box" class="debug-prompt-box">
+            <strong>Controllo / Debug ricetta (facoltativo):</strong>
+            <div style="font-size: 14px; margin: 4px 0 8px 0;">
+              Vuoi che l'AI analizzi la ricetta — ricercando anche sul web — per segnalare eventuali errori, dosi strane, passaggi mancanti o suggerimenti di miglioramento?
+            </div>
+            <div class="row" style="flex: 0 0 auto;">
+              <button type="button" id="run-debug-btn" class="secondary small">Sì, fai controllo / debug</button>
+              <button type="button" id="skip-debug-btn" class="secondary small">No, non serve</button>
+            </div>
+          </div>
+
+          <div id="debug-result-box" class="debug-box hidden">
+            <strong>Esito controllo / debug ricetta:</strong>
+            <div id="debug-summary" style="margin-top: 6px; font-size: 14px;"></div>
+            <ul id="debug-findings-list"></ul>
+          </div>
+
+          <div class="row" style="margin-top: 6px;">
+            <button type="submit" id="save-recipe-btn">Conferma e salva ricetta</button>
+            <button type="button" id="reset-form-btn" class="secondary">Svuota campi</button>
           </div>
         </form>
         <div id="recipe-msg" class="msg hidden"></div>
@@ -281,13 +442,23 @@
     <div class="modal-box">
       <div class="topbar" style="margin-bottom: 10px;">
         <h2 id="detail-title" style="margin: 0;"></h2>
-        <button type="button" id="close-modal-btn" class="secondary">Chiudi</button>
+        <button type="button" id="close-modal-btn" class="secondary small">Chiudi</button>
       </div>
       <div id="detail-meta" class="recipe-meta"></div>
+      <img id="detail-photo" class="preview-img hidden" alt="Foto originale ricetta" style="margin-bottom: 12px;" />
       <h3>Ingredienti</h3>
       <pre id="detail-ingredients"></pre>
       <h3>Procedimento</h3>
       <pre id="detail-steps"></pre>
+      <div id="detail-doubts-wrap" class="doubts-box hidden" style="margin-top: 12px;">
+        <strong>Note / Dubbi annotati in fase di acquisizione:</strong>
+        <ul id="detail-doubts-list"></ul>
+      </div>
+      <div id="detail-debug-wrap" class="debug-box hidden" style="margin-top: 12px;">
+        <strong>Note da controllo / debug:</strong>
+        <div id="detail-debug-summary" style="margin-top: 4px; font-size: 14px;"></div>
+        <ul id="detail-debug-list"></ul>
+      </div>
     </div>
   </div>
 
@@ -344,13 +515,25 @@
       "Cataloga la ricetta scegliendo una delle categorie disponibili. " +
       "Usa 'Conserve' per marmellate, confetture, sottaceti, sott'oli e sughi da vasetto. " +
       "Usa 'Lievitati' per pane, pizza, focacce e brioche. " +
-      "Se il testo è scritto a mano o fotocopiato male, elenca esplicitamente ogni parola, numero o dose che non riesci a leggere con certezza.";
+      "Se il contenuto è scritto a mano, fotocopiato male, registrato a voce o in video, elenca esplicitamente in 'uncertainties' ogni parola, numero, dose o passaggio non chiaro o interpretato.";
 
     let currentRole = null;
     let categories = [...DEFAULT_CATEGORIES];
     let draftCategories = [...DEFAULT_CATEGORIES];
     let aiRules = DEFAULT_AI_RULES;
     let allRecipes = [];
+
+    let currentPhotoDataUrl = null;
+    let currentAudioMedia = null; // { base64, mimeType }
+    let currentVideoMedia = null; // { base64, mimeType }
+    let currentUncertainties = [];
+    let currentDebugReport = null;
+
+    let mediaRecorder = null;
+    let recChunks = [];
+    let recInterval = null;
+    let recSeconds = 0;
+
     let unsubscribeRecipes = null;
     let unsubscribeSettings = null;
 
@@ -369,12 +552,53 @@
     const setupCatList = document.getElementById("setup-cat-list");
     const aiRulesInput = document.getElementById("ai-rules-input");
     const localGeminiKeyInput = document.getElementById("local-gemini-key");
+    const geminiModelSelect = document.getElementById("gemini-model-select");
     const saveSetupBtn = document.getElementById("save-setup-btn");
     const setupMsg = document.getElementById("setup-msg");
 
     const newRecipeCard = document.getElementById("new-recipe-card");
     const cancelNewBtn = document.getElementById("cancel-new-btn");
+    const tabPhoto = document.getElementById("tab-photo");
+    const tabAudio = document.getElementById("tab-audio");
+    const tabVideo = document.getElementById("tab-video");
+    const tabText = document.getElementById("tab-text");
+
+    const panelPhoto = document.getElementById("panel-photo");
+    const panelAudio = document.getElementById("panel-audio");
+    const panelVideo = document.getElementById("panel-video");
+    const panelText = document.getElementById("panel-text");
+
+    const recipePhotoInput = document.getElementById("recipe-photo-input");
+    const photoPreview = document.getElementById("photo-preview");
+    const analyzePhotoBtn = document.getElementById("analyze-photo-btn");
+
+    const startRecBtn = document.getElementById("start-rec-btn");
+    const stopRecBtn = document.getElementById("stop-rec-btn");
+    const recTimer = document.getElementById("rec-timer");
+    const recipeAudioInput = document.getElementById("recipe-audio-input");
+    const audioPreview = document.getElementById("audio-preview");
+    const analyzeAudioBtn = document.getElementById("analyze-audio-btn");
+
+    const recipeVideoInput = document.getElementById("recipe-video-input");
+    const videoPreview = document.getElementById("video-preview");
+    const analyzeVideoBtn = document.getElementById("analyze-video-btn");
+
+    const rawRecipeText = document.getElementById("raw-recipe-text");
+    const analyzeTextBtn = document.getElementById("analyze-text-btn");
+
+    const aiStatusMsg = document.getElementById("ai-status-msg");
+    const aiDoubtsBox = document.getElementById("ai-doubts-box");
+    const aiDoubtsList = document.getElementById("ai-doubts-list");
+
+    const debugPromptBox = document.getElementById("debug-prompt-box");
+    const runDebugBtn = document.getElementById("run-debug-btn");
+    const skipDebugBtn = document.getElementById("skip-debug-btn");
+    const debugResultBox = document.getElementById("debug-result-box");
+    const debugSummary = document.getElementById("debug-summary");
+    const debugFindingsList = document.getElementById("debug-findings-list");
+
     const recipeForm = document.getElementById("recipe-form");
+    const resetFormBtn = document.getElementById("reset-form-btn");
     const recipeMsg = document.getElementById("recipe-msg");
     const recCategorySelect = document.getElementById("rec-category");
     const searchInput = document.getElementById("search-input");
@@ -470,7 +694,7 @@
       }
     });
 
-    // ASCOLTO IMPOSTAZIONI DA FIRESTORE
+    // IMPOSTAZIONI FIRESTORE
     function listenToSettings() {
       if (unsubscribeSettings) unsubscribeSettings();
       const settingsRef = doc(db, "settings", "general");
@@ -516,13 +740,14 @@
       }
     }
 
-    // PANNELLO SETUP (ADMIN)
+    // SETUP ADMIN
     openSetupBtn.addEventListener("click", () => {
       const opening = setupCard.classList.contains("hidden");
       if (opening) {
         draftCategories = [...categories];
         aiRulesInput.value = aiRules;
         localGeminiKeyInput.value = localStorage.getItem("luigina_gemini_key") || "";
+        geminiModelSelect.value = localStorage.getItem("luigina_gemini_model") || "gemini-2.5-flash";
         setupMsg.classList.add("hidden");
         renderSetupCategories();
         setupCard.classList.remove("hidden");
@@ -532,9 +757,7 @@
       }
     });
 
-    closeSetupBtn.addEventListener("click", () => {
-      setupCard.classList.add("hidden");
-    });
+    closeSetupBtn.addEventListener("click", () => setupCard.classList.add("hidden"));
 
     function renderSetupCategories() {
       setupCatList.innerHTML = "";
@@ -584,11 +807,13 @@
     saveSetupBtn.addEventListener("click", async () => {
       setupMsg.classList.add("hidden");
       const keyVal = localGeminiKeyInput.value.trim();
+      const modelVal = geminiModelSelect.value;
       if (keyVal) {
         localStorage.setItem("luigina_gemini_key", keyVal);
       } else {
         localStorage.removeItem("luigina_gemini_key");
       }
+      localStorage.setItem("luigina_gemini_model", modelVal);
 
       try {
         await setDoc(doc(db, "settings", "general"), {
@@ -598,25 +823,467 @@
           updatedBy: auth.currentUser.uid
         }, { merge: true });
 
-        setupMsg.textContent = "Impostazioni salvate e sincronizzate su tutti i dispositivi!";
+        setupMsg.textContent = "Impostazioni salvate e sincronizzate!";
         setupMsg.classList.remove("hidden");
       } catch (err) {
         console.error(err);
-        alert("Errore nel salvataggio: controlla di aver pubblicato le regole Firestore per /settings.");
+        alert("Errore nel salvataggio delle impostazioni.");
       }
     });
 
-    // FORM NUOVA RICETTA
+    // TAB MODALITÀ
+    function setInsertMode(mode) {
+      tabPhoto.classList.toggle("active", mode === "photo");
+      tabAudio.classList.toggle("active", mode === "audio");
+      tabVideo.classList.toggle("active", mode === "video");
+      tabText.classList.toggle("active", mode === "text");
+
+      panelPhoto.classList.toggle("hidden", mode !== "photo");
+      panelAudio.classList.toggle("hidden", mode !== "audio");
+      panelVideo.classList.toggle("hidden", mode !== "video");
+      panelText.classList.toggle("hidden", mode !== "text");
+      aiStatusMsg.classList.add("hidden");
+    }
+
+    tabPhoto.addEventListener("click", () => setInsertMode("photo"));
+    tabAudio.addEventListener("click", () => setInsertMode("audio"));
+    tabVideo.addEventListener("click", () => setInsertMode("video"));
+    tabText.addEventListener("click", () => setInsertMode("text"));
+
     openNewBtn.addEventListener("click", () => {
       newRecipeCard.classList.toggle("hidden");
       setupCard.classList.add("hidden");
       recipeMsg.classList.add("hidden");
     });
 
-    cancelNewBtn.addEventListener("click", () => {
-      newRecipeCard.classList.add("hidden");
-      recipeForm.reset();
+    cancelNewBtn.addEventListener("click", () => newRecipeCard.classList.add("hidden"));
+
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const res = String(reader.result || "");
+          const parts = res.split(",");
+          resolve({
+            dataUrl: res,
+            base64: parts[1] || "",
+            mimeType: file.type || "application/octet-stream"
+          });
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function readImageAsCompressedDataUrl(file, maxWidth = 1400, quality = 0.82) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const img = new Image();
+          img.onload = () => {
+            const scale = img.width > maxWidth ? maxWidth / img.width : 1;
+            const canvas = document.createElement("canvas");
+            canvas.width = Math.round(img.width * scale);
+            canvas.height = Math.round(img.height * scale);
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL("image/jpeg", quality));
+          };
+          img.onerror = reject;
+          img.src = ev.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // FOTO
+    recipePhotoInput.addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        currentPhotoDataUrl = await readImageAsCompressedDataUrl(file);
+        photoPreview.src = currentPhotoDataUrl;
+        photoPreview.classList.remove("hidden");
+      } catch (err) {
+        console.error(err);
+        showAiStatus("Impossibile leggere l'immagine selezionata.", false);
+      }
     });
+
+    // REGISTRAZIONE VOCE + FILE AUDIO
+    startRecBtn.addEventListener("click", async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        recChunks = [];
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.ondataavailable = (ev) => {
+          if (ev.data.size > 0) recChunks.push(ev.data);
+        };
+        mediaRecorder.onstop = async () => {
+          stream.getTracks().forEach((t) => t.stop());
+          const blob = new Blob(recChunks, { type: mediaRecorder.mimeType || "audio/webm" });
+          const converted = await fileToBase64(new File([blob], "registrazione.webm", { type: blob.type }));
+          currentAudioMedia = { base64: converted.base64, mimeType: blob.type };
+          audioPreview.src = URL.createObjectURL(blob);
+          audioPreview.classList.remove("hidden");
+        };
+        mediaRecorder.start();
+        recSeconds = 0;
+        recTimer.textContent = "Registrazione in corso: 0s";
+        recInterval = setInterval(() => {
+          recSeconds += 1;
+          recTimer.textContent = `Registrazione in corso: ${recSeconds}s`;
+        }, 1000);
+        startRecBtn.disabled = true;
+        stopRecBtn.disabled = false;
+      } catch (err) {
+        console.error(err);
+        showAiStatus("Microfono non disponibile o permesso negato. Puoi comunque caricare un file audio.", false);
+      }
+    });
+
+    stopRecBtn.addEventListener("click", () => {
+      if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        mediaRecorder.stop();
+      }
+      clearInterval(recInterval);
+      startRecBtn.disabled = false;
+      stopRecBtn.disabled = true;
+      recTimer.textContent = `Registrazione completata (${recSeconds}s).`;
+    });
+
+    recipeAudioInput.addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (file.size > 18 * 1024 * 1024) {
+        showAiStatus("File audio troppo grande (meglio sotto i 18 MB).", false);
+        return;
+      }
+      const converted = await fileToBase64(file);
+      currentAudioMedia = { base64: converted.base64, mimeType: converted.mimeType };
+      audioPreview.src = URL.createObjectURL(file);
+      audioPreview.classList.remove("hidden");
+    });
+
+    // VIDEO
+    recipeVideoInput.addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (file.size > 16 * 1024 * 1024) {
+        showAiStatus("Video troppo pesante per l'invio diretto dal browser (meglio clip leggere sotto i 16 MB).", false);
+        return;
+      }
+      const converted = await fileToBase64(file);
+      currentVideoMedia = { base64: converted.base64, mimeType: converted.mimeType };
+      videoPreview.src = URL.createObjectURL(file);
+      videoPreview.classList.remove("hidden");
+    });
+
+    function showAiStatus(text, isOk = false) {
+      aiStatusMsg.textContent = text;
+      aiStatusMsg.classList.toggle("ok", isOk);
+      aiStatusMsg.classList.remove("hidden");
+    }
+
+    function renderUncertainties(list) {
+      currentUncertainties = Array.isArray(list) ? list.filter(Boolean) : [];
+      if (currentUncertainties.length === 0) {
+        aiDoubtsBox.classList.add("hidden");
+        aiDoubtsList.innerHTML = "";
+        return;
+      }
+      aiDoubtsList.innerHTML = "";
+      currentUncertainties.forEach((item) => {
+        const li = document.createElement("li");
+        li.textContent = item;
+        aiDoubtsList.appendChild(li);
+      });
+      aiDoubtsBox.classList.remove("hidden");
+    }
+
+    function getGeminiConfig() {
+      const apiKey = (localStorage.getItem("luigina_gemini_key") || "").trim();
+      const model = localStorage.getItem("luigina_gemini_model") || "gemini-2.5-flash";
+      if (!apiKey) {
+        throw new Error("Manca la chiave API Gemini. Aprila e salvala dal pulsante 'Setup' (Admin).");
+      }
+      return { apiKey, model };
+    }
+
+    async function callGeminiRecipeExtractor({ photoDataUrl = null, audioMedia = null, videoMedia = null, rawText = "" }) {
+      const { apiKey, model } = getGeminiConfig();
+
+      const systemPrompt =
+        `Sei un assistente che digitalizza ricette di famiglia (da foto scritte a mano o fotocopiate, registrazioni vocali, video o testo).\n` +
+        `Categorie consentite: ${categories.join(", ")}.\n` +
+        `Regole dell'utente: ${aiRules}\n\n` +
+        `Rispondi ESCLUSIVAMENTE con un oggetto JSON valido con questa struttura:\n` +
+        `{\n` +
+        `  "title": "Titolo chiaro della ricetta",\n` +
+        `  "category": "Una delle categorie consentite",\n` +
+        `  "origin": "Origine o nota se deducibile (es. Scritto a mano, Racconto vocale), altrimenti stringa vuota",\n` +
+        `  "ingredients": "Elenco ingredienti, uno per riga",\n` +
+        `  "steps": "Procedimento chiaro e ordinato",\n` +
+        `  "uncertainties": ["Elenco di parole illeggibili, dosi dubbie, suoni incerti o interpretazioni da verificare"]\n` +
+        `}`;
+
+      const parts = [{ text: systemPrompt }];
+
+      if (photoDataUrl) {
+        const match = photoDataUrl.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,(.+)$/);
+        if (match) {
+          parts.push({ inlineData: { mimeType: match[1], data: match[2] } });
+        }
+        parts.push({ text: "Decifra e cataloga la ricetta presente in questa foto. Indica in 'uncertainties' ogni parola o dose scritta a mano o sbiadita dubbia." });
+      }
+
+      if (audioMedia?.base64) {
+        parts.push({ inlineData: { mimeType: audioMedia.mimeType, data: audioMedia.base64 } });
+        parts.push({ text: "Ascolta la ricetta raccontata nell'audio, estrai ingredienti e procedimento e segnala in 'uncertainties' eventuali parole o quantità poco chiare." });
+      }
+
+      if (videoMedia?.base64) {
+        parts.push({ inlineData: { mimeType: videoMedia.mimeType, data: videoMedia.base64 } });
+        parts.push({ text: "Osserva e ascolta la ricetta nel video, estrai ingredienti e procedimento e segnala in 'uncertainties' eventuali parti o quantità poco chiare." });
+      }
+
+      if (rawText) {
+        parts.push({ text: `Testo grezzo della ricetta da strutturare:\n${rawText}` });
+      }
+
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+      const resp = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts }],
+          generationConfig: {
+            responseMimeType: "application/json",
+            temperature: 0.2
+          }
+        })
+      });
+
+      if (!resp.ok) {
+        const errText = await resp.text();
+        throw new Error(`Errore API Gemini (${resp.status}): ${errText.slice(0, 180)}`);
+      }
+
+      const data = await resp.json();
+      const rawJson = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!rawJson) throw new Error("L'AI non ha restituito un risultato leggibile.");
+      return JSON.parse(rawJson);
+    }
+
+    function applyAiResultToForm(parsed) {
+      document.getElementById("rec-title").value = parsed.title || "";
+      if (parsed.category && categories.includes(parsed.category)) {
+        recCategorySelect.value = parsed.category;
+      } else if (categories.length > 0) {
+        recCategorySelect.value = categories[categories.length - 1];
+      }
+      document.getElementById("rec-origin").value = parsed.origin || "";
+      document.getElementById("rec-ingredients").value = Array.isArray(parsed.ingredients)
+        ? parsed.ingredients.join("\n")
+        : (parsed.ingredients || "");
+      document.getElementById("rec-steps").value = Array.isArray(parsed.steps)
+        ? parsed.steps.join("\n")
+        : (parsed.steps || "");
+
+      renderUncertainties(parsed.uncertainties || []);
+      currentDebugReport = null;
+      debugResultBox.classList.add("hidden");
+      debugPromptBox.classList.remove("hidden");
+    }
+
+    analyzePhotoBtn.addEventListener("click", async () => {
+      if (!currentPhotoDataUrl) {
+        showAiStatus("Seleziona o scatta prima una foto.", false);
+        return;
+      }
+      analyzePhotoBtn.disabled = true;
+      showAiStatus("Analisi della foto in corso con l'AI...", true);
+      try {
+        const parsed = await callGeminiRecipeExtractor({ photoDataUrl: currentPhotoDataUrl });
+        applyAiResultToForm(parsed);
+        showAiStatus("Foto analizzata: controlla i campi e i dubbi prima di salvare.", true);
+      } catch (err) {
+        showAiStatus(err.message || "Errore durante l'analisi della foto.", false);
+      } finally {
+        analyzePhotoBtn.disabled = false;
+      }
+    });
+
+    analyzeAudioBtn.addEventListener("click", async () => {
+      if (!currentAudioMedia?.base64) {
+        showAiStatus("Registra o carica prima un file audio.", false);
+        return;
+      }
+      analyzeAudioBtn.disabled = true;
+      showAiStatus("Ascolto e analisi dell'audio in corso con l'AI...", true);
+      try {
+        const parsed = await callGeminiRecipeExtractor({ audioMedia: currentAudioMedia });
+        applyAiResultToForm(parsed);
+        showAiStatus("Audio analizzato: controlla i campi e i dubbi prima di salvare.", true);
+      } catch (err) {
+        showAiStatus(err.message || "Errore durante l'analisi dell'audio.", false);
+      } finally {
+        analyzeAudioBtn.disabled = false;
+      }
+    });
+
+    analyzeVideoBtn.addEventListener("click", async () => {
+      if (!currentVideoMedia?.base64) {
+        showAiStatus("Carica prima un file video.", false);
+        return;
+      }
+      analyzeVideoBtn.disabled = true;
+      showAiStatus("Analisi del video in corso con l'AI...", true);
+      try {
+        const parsed = await callGeminiRecipeExtractor({ videoMedia: currentVideoMedia });
+        applyAiResultToForm(parsed);
+        showAiStatus("Video analizzato: controlla i campi e i dubbi prima di salvare.", true);
+      } catch (err) {
+        showAiStatus(err.message || "Errore durante l'analisi del video.", false);
+      } finally {
+        analyzeVideoBtn.disabled = false;
+      }
+    });
+
+    analyzeTextBtn.addEventListener("click", async () => {
+      const txt = rawRecipeText.value.trim();
+      if (!txt) {
+        showAiStatus("Scrivi o incolla prima il testo della ricetta.", false);
+        return;
+      }
+      analyzeTextBtn.disabled = true;
+      showAiStatus("Strutturazione del testo in corso con l'AI...", true);
+      try {
+        const parsed = await callGeminiRecipeExtractor({ rawText: txt });
+        applyAiResultToForm(parsed);
+        showAiStatus("Testo strutturato: controlla i campi prima di salvare.", true);
+      } catch (err) {
+        showAiStatus(err.message || "Errore durante l'analisi del testo.", false);
+      } finally {
+        analyzeTextBtn.disabled = false;
+      }
+    });
+
+    // CONTROLLO / DEBUG FACOLTATIVO CON RICERCA WEB
+    skipDebugBtn.addEventListener("click", () => {
+      debugPromptBox.classList.add("hidden");
+    });
+
+    runDebugBtn.addEventListener("click", async () => {
+      const title = document.getElementById("rec-title").value.trim();
+      const category = recCategorySelect.value;
+      const ingredients = document.getElementById("rec-ingredients").value.trim();
+      const steps = document.getElementById("rec-steps").value.trim();
+
+      if (!title && !ingredients && !steps) {
+        showAiStatus("Inserisci o estrai prima almeno titolo, ingredienti o procedimento da controllare.", false);
+        return;
+      }
+
+      runDebugBtn.disabled = true;
+      showAiStatus("Controllo / debug della ricetta in corso (con ricerca web)...", true);
+
+      try {
+        const { apiKey, model } = getGeminiConfig();
+        const debugPrompt =
+          `Sei un esperto culinario e revisore di ricette. Analizza questa ricetta verificando anche sul web eventuali incongruenze, ` +
+          `dosi fuori scala, passaggi mancanti, sicurezza alimentare (es. conserve/lievitati) o varianti tradizionali.\n` +
+          `Titolo: ${title}\nCategoria: ${category}\nIngredienti:\n${ingredients}\nProcedimento:\n${steps}\n\n` +
+          `Rispondi con un JSON puro (senza markdown \`\`\`) con questa struttura:\n` +
+          `{\n` +
+          `  "summary": "Giudizio sintetico in 1-2 frasi",\n` +
+          `  "findings": ["Elenco puntato di eventuali errori, dubbi, mancanze o suggerimenti pratici"]\n` +
+          `}`;
+
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+        const resp = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ role: "user", parts: [{ text: debugPrompt }] }],
+            tools: [{ google_search: {} }],
+            generationConfig: { temperature: 0.2 }
+          })
+        });
+
+        if (!resp.ok) {
+          const errText = await resp.text();
+          throw new Error(`Errore durante il debug (${resp.status}): ${errText.slice(0, 180)}`);
+        }
+
+        const data = await resp.json();
+        const rawText = (data?.candidates?.[0]?.content?.parts || [])
+          .map((p) => p.text || "")
+          .join("\n")
+          .trim();
+
+        const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error("Impossibile leggere l'esito del controllo.");
+
+        const parsedDebug = JSON.parse(jsonMatch[0]);
+        currentDebugReport = {
+          summary: parsedDebug.summary || "Controllo completato.",
+          findings: Array.isArray(parsedDebug.findings) ? parsedDebug.findings.filter(Boolean) : []
+        };
+
+        debugSummary.textContent = currentDebugReport.summary;
+        debugFindingsList.innerHTML = "";
+        if (currentDebugReport.findings.length === 0) {
+          const li = document.createElement("li");
+          li.textContent = "Nessuna criticità rilevata: la ricetta appare coerente.";
+          debugFindingsList.appendChild(li);
+        } else {
+          currentDebugReport.findings.forEach((f) => {
+            const li = document.createElement("li");
+            li.textContent = f;
+            debugFindingsList.appendChild(li);
+          });
+        }
+        debugResultBox.classList.remove("hidden");
+        debugPromptBox.classList.add("hidden");
+        showAiStatus("Controllo / debug completato: puoi correggere i campi o procedere al salvataggio.", true);
+      } catch (err) {
+        console.error(err);
+        showAiStatus(err.message || "Errore durante il controllo della ricetta.", false);
+      } finally {
+        runDebugBtn.disabled = false;
+      }
+    });
+
+    function clearRecipeForm() {
+      recipeForm.reset();
+      currentPhotoDataUrl = null;
+      currentAudioMedia = null;
+      currentVideoMedia = null;
+      currentDebugReport = null;
+
+      recipePhotoInput.value = "";
+      photoPreview.src = "";
+      photoPreview.classList.add("hidden");
+
+      recipeAudioInput.value = "";
+      audioPreview.src = "";
+      audioPreview.classList.add("hidden");
+      recTimer.textContent = "";
+
+      recipeVideoInput.value = "";
+      videoPreview.src = "";
+      videoPreview.classList.add("hidden");
+
+      rawRecipeText.value = "";
+      aiStatusMsg.classList.add("hidden");
+      renderUncertainties([]);
+      debugResultBox.classList.add("hidden");
+      debugPromptBox.classList.remove("hidden");
+    }
+
+    resetFormBtn.addEventListener("click", clearRecipeForm);
 
     recipeForm.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -628,6 +1295,10 @@
       const ingredients = document.getElementById("rec-ingredients").value.trim();
       const steps = document.getElementById("rec-steps").value.trim();
 
+      const photoToSave = currentPhotoDataUrl && currentPhotoDataUrl.length < 750000
+        ? currentPhotoDataUrl
+        : null;
+
       try {
         await addDoc(collection(db, "recipes"), {
           title,
@@ -635,13 +1306,17 @@
           origin,
           ingredients,
           steps,
+          photoDataUrl: photoToSave,
+          uncertainties: currentUncertainties,
+          debugReport: currentDebugReport,
           createdBy: auth.currentUser.uid,
           createdAt: serverTimestamp()
         });
-        recipeForm.reset();
+        clearRecipeForm();
         newRecipeCard.classList.add("hidden");
       } catch (err) {
-        recipeMsg.textContent = "Impossibile salvare: verifica i permessi del tuo ruolo.";
+        console.error(err);
+        recipeMsg.textContent = "Impossibile salvare: verifica i permessi o la dimensione della foto.";
         recipeMsg.classList.remove("hidden");
       }
     });
@@ -702,6 +1377,46 @@
           document.getElementById("detail-meta").textContent = metaText;
           document.getElementById("detail-ingredients").textContent = r.ingredients || "";
           document.getElementById("detail-steps").textContent = r.steps || "";
+
+          const detailPhoto = document.getElementById("detail-photo");
+          if (r.photoDataUrl) {
+            detailPhoto.src = r.photoDataUrl;
+            detailPhoto.classList.remove("hidden");
+          } else {
+            detailPhoto.src = "";
+            detailPhoto.classList.add("hidden");
+          }
+
+          const doubtsWrap = document.getElementById("detail-doubts-wrap");
+          const doubtsList = document.getElementById("detail-doubts-list");
+          if (Array.isArray(r.uncertainties) && r.uncertainties.length > 0) {
+            doubtsList.innerHTML = "";
+            r.uncertainties.forEach((u) => {
+              const li = document.createElement("li");
+              li.textContent = u;
+              doubtsList.appendChild(li);
+            });
+            doubtsWrap.classList.remove("hidden");
+          } else {
+            doubtsWrap.classList.add("hidden");
+          }
+
+          const debugWrap = document.getElementById("detail-debug-wrap");
+          const detailDebugSummary = document.getElementById("detail-debug-summary");
+          const detailDebugList = document.getElementById("detail-debug-list");
+          if (r.debugReport && (r.debugReport.summary || (r.debugReport.findings && r.debugReport.findings.length > 0))) {
+            detailDebugSummary.textContent = r.debugReport.summary || "";
+            detailDebugList.innerHTML = "";
+            (r.debugReport.findings || []).forEach((f) => {
+              const li = document.createElement("li");
+              li.textContent = f;
+              detailDebugList.appendChild(li);
+            });
+            debugWrap.classList.remove("hidden");
+          } else {
+            debugWrap.classList.add("hidden");
+          }
+
           detailModal.classList.remove("hidden");
         });
 
