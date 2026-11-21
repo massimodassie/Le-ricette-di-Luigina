@@ -15,6 +15,8 @@
       --border: #e5ded3;
       --warn-bg: #fff5e6;
       --warn-border: #e6a23c;
+      --ok-bg: #eef7f0;
+      --ok-border: #4caf50;
     }
     * { box-sizing: border-box; }
     body {
@@ -25,7 +27,7 @@
       line-height: 1.5;
     }
     .container {
-      max-width: 820px;
+      max-width: 860px;
       margin: 0 auto;
       padding: 16px;
     }
@@ -86,8 +88,12 @@
       font-size: 13px;
     }
     button.danger:hover { background: #941e23; }
+    button.small {
+      padding: 5px 9px;
+      font-size: 13px;
+    }
     .stack { display: flex; flex-direction: column; gap: 10px; }
-    .row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     .row > * { flex: 1 1 180px; }
     .hidden { display: none !important; }
     .msg {
@@ -97,6 +103,25 @@
       border: 1px solid var(--warn-border);
       font-size: 14px;
       margin-top: 10px;
+    }
+    .msg.ok {
+      background: var(--ok-bg);
+      border-color: var(--ok-border);
+    }
+    .cat-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 10px 0;
+    }
+    .cat-chip-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #fcfaf7;
     }
     .recipe-item {
       border: 1px solid var(--border);
@@ -134,6 +159,13 @@
       font-family: inherit;
       margin: 6px 0;
     }
+    label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 4px;
+    }
   </style>
 </head>
 <body>
@@ -170,26 +202,52 @@
         </div>
         <div class="row" style="flex: 0 0 auto;">
           <button type="button" id="open-new-btn" class="hidden">+ Nuova ricetta</button>
+          <button type="button" id="open-setup-btn" class="secondary hidden">Setup</button>
           <button type="button" id="logout-btn" class="secondary">Esci</button>
         </div>
       </div>
 
-      <!-- FORM NUOVA RICETTA BASE (per test ruoli; nella prossima fase lo colleghiamo all'AI) -->
+      <!-- PANNELLO SETUP (SOLO ADMIN) -->
+      <div id="setup-card" class="card hidden">
+        <div class="topbar">
+          <h2 style="margin: 0;">Pannello Setup (Admin)</h2>
+          <button type="button" id="close-setup-btn" class="secondary small">Chiudi</button>
+        </div>
+        <p style="color: var(--muted); font-size: 14px;">
+          Personalizza le categorie dell'archivio e le regole di catalogazione. Le modifiche si applicano subito a tutti gli utenti.
+        </p>
+
+        <h3>Categorie ricette</h3>
+        <div class="row">
+          <input type="text" id="new-cat-input" placeholder="Nuova categoria (es. Liquori, Salse...)" />
+          <button type="button" id="add-cat-btn" style="flex: 0 0 auto;">+ Aggiungi categoria</button>
+        </div>
+        <div id="setup-cat-list" class="cat-list"></div>
+
+        <hr style="border: 0; border-top: 1px solid var(--border); margin: 16px 0;" />
+
+        <h3>Regole di catalogazione per l'AI</h3>
+        <label for="ai-rules-input">Istruzioni personalizzate (verranno usate quando scatti la foto o incolli un testo):</label>
+        <textarea id="ai-rules-input" placeholder="Es. Classifica marmellate e sottaceti in Conserve. Segnala ogni parola scritta a mano poco leggibile."></textarea>
+
+        <div style="margin-top: 12px;">
+          <label for="local-gemini-key">Chiave API Gemini (salvata solo su questo dispositivo, mai inviata su GitHub):</label>
+          <input type="password" id="local-gemini-key" placeholder="AIza..." />
+        </div>
+
+        <div class="row" style="margin-top: 14px;">
+          <button type="button" id="save-setup-btn">Salva impostazioni</button>
+        </div>
+        <div id="setup-msg" class="msg ok hidden"></div>
+      </div>
+
+      <!-- FORM NUOVA RICETTA BASE -->
       <div id="new-recipe-card" class="card hidden">
-        <h2>Nuova ricetta (inserimento rapido)</h2>
+        <h2>Nuova ricetta</h2>
         <form id="recipe-form" class="stack">
           <div class="row">
             <input type="text" id="rec-title" placeholder="Titolo ricetta (es. Ragù alla veneta)" required />
-            <select id="rec-category" required>
-              <option value="">Seleziona categoria...</option>
-              <option value="Antipasti">Antipasti</option>
-              <option value="Primi">Primi</option>
-              <option value="Secondi">Secondi</option>
-              <option value="Contorni">Contorni</option>
-              <option value="Lievitati">Lievitati</option>
-              <option value="Dolci">Dolci</option>
-              <option value="Altro">Altro</option>
-            </select>
+            <select id="rec-category" required></select>
           </div>
           <input type="text" id="rec-origin" placeholder="Origine / Note (es. Quaderno scritto a mano, Zia...)" />
           <textarea id="rec-ingredients" placeholder="Ingredienti (uno per riga)" required></textarea>
@@ -206,16 +264,7 @@
       <div class="card">
         <div class="row">
           <input type="search" id="search-input" placeholder="Cerca per titolo, ingrediente o origine..." />
-          <select id="category-filter">
-            <option value="ALL">Tutte le categorie</option>
-            <option value="Antipasti">Antipasti</option>
-            <option value="Primi">Primi</option>
-            <option value="Secondi">Secondi</option>
-            <option value="Contorni">Contorni</option>
-            <option value="Lievitati">Lievitati</option>
-            <option value="Dolci">Dolci</option>
-            <option value="Altro">Altro</option>
-          </select>
+          <select id="category-filter"></select>
         </div>
       </div>
 
@@ -256,6 +305,7 @@
       getFirestore,
       doc,
       getDoc,
+      setDoc,
       collection,
       addDoc,
       deleteDoc,
@@ -272,27 +322,61 @@
       storageBucket: "le-ricette-di-luigina.firebasestorage.app",
       messagingSenderId: "924918844566",
       appId: "1:924918844566:web:5b6ae9efb255b4cda706b7"
-    }; //[cite: 4]
+    };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
     const googleProvider = new GoogleAuthProvider();
 
+    const DEFAULT_CATEGORIES = [
+      "Antipasti",
+      "Primi",
+      "Secondi",
+      "Contorni",
+      "Lievitati",
+      "Dolci",
+      "Conserve",
+      "Altro"
+    ];
+
+    const DEFAULT_AI_RULES =
+      "Cataloga la ricetta scegliendo una delle categorie disponibili. " +
+      "Usa 'Conserve' per marmellate, confetture, sottaceti, sott'oli e sughi da vasetto. " +
+      "Usa 'Lievitati' per pane, pizza, focacce e brioche. " +
+      "Se il testo è scritto a mano o fotocopiato male, elenca esplicitamente ogni parola, numero o dose che non riesci a leggere con certezza.";
+
     let currentRole = null;
+    let categories = [...DEFAULT_CATEGORIES];
+    let draftCategories = [...DEFAULT_CATEGORIES];
+    let aiRules = DEFAULT_AI_RULES;
     let allRecipes = [];
     let unsubscribeRecipes = null;
+    let unsubscribeSettings = null;
 
     const loginView = document.getElementById("login-view");
     const appView = document.getElementById("app-view");
     const authMessage = document.getElementById("auth-message");
     const userDisplay = document.getElementById("user-display");
     const userRoleBadge = document.getElementById("user-role-badge");
+
     const openNewBtn = document.getElementById("open-new-btn");
+    const openSetupBtn = document.getElementById("open-setup-btn");
+    const setupCard = document.getElementById("setup-card");
+    const closeSetupBtn = document.getElementById("close-setup-btn");
+    const newCatInput = document.getElementById("new-cat-input");
+    const addCatBtn = document.getElementById("add-cat-btn");
+    const setupCatList = document.getElementById("setup-cat-list");
+    const aiRulesInput = document.getElementById("ai-rules-input");
+    const localGeminiKeyInput = document.getElementById("local-gemini-key");
+    const saveSetupBtn = document.getElementById("save-setup-btn");
+    const setupMsg = document.getElementById("setup-msg");
+
     const newRecipeCard = document.getElementById("new-recipe-card");
     const cancelNewBtn = document.getElementById("cancel-new-btn");
     const recipeForm = document.getElementById("recipe-form");
     const recipeMsg = document.getElementById("recipe-msg");
+    const recCategorySelect = document.getElementById("rec-category");
     const searchInput = document.getElementById("search-input");
     const categoryFilter = document.getElementById("category-filter");
     const recipesList = document.getElementById("recipes-list");
@@ -333,6 +417,7 @@
 
     document.getElementById("logout-btn").addEventListener("click", async () => {
       if (unsubscribeRecipes) unsubscribeRecipes();
+      if (unsubscribeSettings) unsubscribeSettings();
       await signOut(auth);
     });
 
@@ -368,8 +453,16 @@
           newRecipeCard.classList.add("hidden");
         }
 
+        if (currentRole === "admin") {
+          openSetupBtn.classList.remove("hidden");
+        } else {
+          openSetupBtn.classList.add("hidden");
+          setupCard.classList.add("hidden");
+        }
+
         loginView.classList.add("hidden");
         appView.classList.remove("hidden");
+        listenToSettings();
         listenToRecipes();
       } catch (err) {
         console.error(err);
@@ -377,8 +470,146 @@
       }
     });
 
+    // ASCOLTO IMPOSTAZIONI DA FIRESTORE
+    function listenToSettings() {
+      if (unsubscribeSettings) unsubscribeSettings();
+      const settingsRef = doc(db, "settings", "general");
+      unsubscribeSettings = onSnapshot(settingsRef, (snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
+          if (Array.isArray(data.categories) && data.categories.length > 0) {
+            categories = [...data.categories];
+          }
+          if (typeof data.aiRules === "string" && data.aiRules.trim()) {
+            aiRules = data.aiRules;
+          }
+        } else {
+          categories = [...DEFAULT_CATEGORIES];
+          aiRules = DEFAULT_AI_RULES;
+        }
+        syncCategoryDropdowns();
+      });
+    }
+
+    function syncCategoryDropdowns() {
+      const prevFormVal = recCategorySelect.value;
+      const prevFilterVal = categoryFilter.value || "ALL";
+
+      recCategorySelect.innerHTML = `<option value="">Seleziona categoria...</option>`;
+      categoryFilter.innerHTML = `<option value="ALL">Tutte le categorie</option>`;
+
+      categories.forEach((cat) => {
+        const opt1 = document.createElement("option");
+        opt1.value = cat;
+        opt1.textContent = cat;
+        recCategorySelect.appendChild(opt1);
+
+        const opt2 = document.createElement("option");
+        opt2.value = cat;
+        opt2.textContent = cat;
+        categoryFilter.appendChild(opt2);
+      });
+
+      if (categories.includes(prevFormVal)) recCategorySelect.value = prevFormVal;
+      if (prevFilterVal === "ALL" || categories.includes(prevFilterVal)) {
+        categoryFilter.value = prevFilterVal;
+      }
+    }
+
+    // PANNELLO SETUP (ADMIN)
+    openSetupBtn.addEventListener("click", () => {
+      const opening = setupCard.classList.contains("hidden");
+      if (opening) {
+        draftCategories = [...categories];
+        aiRulesInput.value = aiRules;
+        localGeminiKeyInput.value = localStorage.getItem("luigina_gemini_key") || "";
+        setupMsg.classList.add("hidden");
+        renderSetupCategories();
+        setupCard.classList.remove("hidden");
+        newRecipeCard.classList.add("hidden");
+      } else {
+        setupCard.classList.add("hidden");
+      }
+    });
+
+    closeSetupBtn.addEventListener("click", () => {
+      setupCard.classList.add("hidden");
+    });
+
+    function renderSetupCategories() {
+      setupCatList.innerHTML = "";
+      draftCategories.forEach((cat, idx) => {
+        const row = document.createElement("div");
+        row.className = "cat-chip-row";
+        row.innerHTML = `
+          <strong>${escapeHtml(cat)}</strong>
+          <div style="display: flex; gap: 6px;">
+            <button type="button" class="secondary small up-btn" ${idx === 0 ? "disabled" : ""}>↑</button>
+            <button type="button" class="secondary small down-btn" ${idx === draftCategories.length - 1 ? "disabled" : ""}>↓</button>
+            <button type="button" class="danger small remove-btn">Rimuovi</button>
+          </div>
+        `;
+        row.querySelector(".up-btn").addEventListener("click", () => {
+          [draftCategories[idx - 1], draftCategories[idx]] = [draftCategories[idx], draftCategories[idx - 1]];
+          renderSetupCategories();
+        });
+        row.querySelector(".down-btn").addEventListener("click", () => {
+          [draftCategories[idx + 1], draftCategories[idx]] = [draftCategories[idx], draftCategories[idx + 1]];
+          renderSetupCategories();
+        });
+        row.querySelector(".remove-btn").addEventListener("click", () => {
+          if (draftCategories.length <= 1) {
+            alert("Deve rimanere almeno una categoria.");
+            return;
+          }
+          draftCategories.splice(idx, 1);
+          renderSetupCategories();
+        });
+        setupCatList.appendChild(row);
+      });
+    }
+
+    addCatBtn.addEventListener("click", () => {
+      const val = newCatInput.value.trim();
+      if (!val) return;
+      if (draftCategories.some((c) => c.toLowerCase() === val.toLowerCase())) {
+        alert("Questa categoria esiste già.");
+        return;
+      }
+      draftCategories.push(val);
+      newCatInput.value = "";
+      renderSetupCategories();
+    });
+
+    saveSetupBtn.addEventListener("click", async () => {
+      setupMsg.classList.add("hidden");
+      const keyVal = localGeminiKeyInput.value.trim();
+      if (keyVal) {
+        localStorage.setItem("luigina_gemini_key", keyVal);
+      } else {
+        localStorage.removeItem("luigina_gemini_key");
+      }
+
+      try {
+        await setDoc(doc(db, "settings", "general"), {
+          categories: draftCategories,
+          aiRules: aiRulesInput.value.trim() || DEFAULT_AI_RULES,
+          updatedAt: serverTimestamp(),
+          updatedBy: auth.currentUser.uid
+        }, { merge: true });
+
+        setupMsg.textContent = "Impostazioni salvate e sincronizzate su tutti i dispositivi!";
+        setupMsg.classList.remove("hidden");
+      } catch (err) {
+        console.error(err);
+        alert("Errore nel salvataggio: controlla di aver pubblicato le regole Firestore per /settings.");
+      }
+    });
+
+    // FORM NUOVA RICETTA
     openNewBtn.addEventListener("click", () => {
       newRecipeCard.classList.toggle("hidden");
+      setupCard.classList.add("hidden");
       recipeMsg.classList.add("hidden");
     });
 
@@ -392,7 +623,7 @@
       recipeMsg.classList.add("hidden");
 
       const title = document.getElementById("rec-title").value.trim();
-      const category = document.getElementById("rec-category").value;
+      const category = recCategorySelect.value;
       const origin = document.getElementById("rec-origin").value.trim();
       const ingredients = document.getElementById("rec-ingredients").value.trim();
       const steps = document.getElementById("rec-steps").value.trim();
@@ -415,6 +646,7 @@
       }
     });
 
+    // ELENCO RICETTE
     function listenToRecipes() {
       if (unsubscribeRecipes) unsubscribeRecipes();
       const q = query(collection(db, "recipes"), orderBy("createdAt", "desc"));
@@ -501,6 +733,7 @@
 
     searchInput.addEventListener("input", renderRecipes);
     categoryFilter.addEventListener("change", renderRecipes);
+    syncCategoryDropdowns();
   </script>
 </body>
 </html>
