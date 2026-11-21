@@ -1230,28 +1230,7 @@
         }
         return data;
       }
-
-      if (!localKey) {
-        throw new Error("Configura l'URL Proxy Apps Script oppure la chiave API Gemini nel pannello 'Setup' (Admin).");
-      }
-
-      const body = { contents, generationConfig };
-      if (tools) body.tools = tools;
-
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(localKey)}`;
-      const resp = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
-
-      if (!resp.ok) {
-        const errText = await resp.text();
-        throw new Error(`Errore API Gemini (${resp.status}): ${errText.slice(0, 200)}`);
-      }
-      return await resp.json();
-    }
-
+      
     function normalizeRecipeItem(item) {
       return {
         title: item?.title || "",
