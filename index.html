@@ -86,7 +86,6 @@
       min-height: calc(100vh - 52px);
     }
 
-    /* MENU LATERALE MINIMAL IN STILE MANOSCRITTO */
     .sidebar {
       position: sticky;
       top: 26px;
@@ -202,7 +201,6 @@
       min-width: 0;
     }
 
-    /* BARRA RICERCA FLUTTUANTE PULITA */
     .search-bar-row {
       display: grid;
       grid-template-columns: minmax(0, 1.5fr) minmax(200px, 0.8fr);
@@ -247,7 +245,6 @@
       margin: 0 0 20px 0;
     }
 
-    /* CONTENITORI PER CATEGORIA */
     .categories-stack {
       display: flex;
       flex-direction: column;
@@ -294,7 +291,6 @@
       color: var(--ink);
     }
 
-    /* GRIGLIA RICETTE ALL'INTERNO DEL CONTENITORE CATEGORIA */
     .recipes-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
@@ -599,6 +595,13 @@
       border-radius: var(--radius-sm);
       border: 1px solid var(--border);
       background: var(--surface-soft);
+    }
+
+    .dialog-audio-box {
+      padding: 10px;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 253, 249, 0.78);
+      border: 1px dashed var(--border);
     }
 
     .multi-bar {
@@ -1022,8 +1025,20 @@
               </div>
 
               <div class="dialog-box stack">
-                <label for="refine-instruction-input">Dialoga con l'AI per rifinire o chiarire questa ricetta:</label>
+                <label for="refine-instruction-input">Dialoga con l'AI per rifinire o chiarire questa ricetta (testo o audio):</label>
                 <input type="text" id="refine-instruction-input" placeholder="Es. Completa il procedimento o chiarisci una parola dubbia..." />
+
+                <div class="dialog-audio-box stack">
+                  <div class="row">
+                    <button type="button" id="start-refine-rec-btn" class="secondary small">Registra istruzione vocale</button>
+                    <button type="button" id="stop-refine-rec-btn" class="secondary small" disabled>Ferma audio</button>
+                    <button type="button" id="clear-refine-audio-btn" class="secondary small hidden">Rimuovi audio</button>
+                  </div>
+                  <div id="refine-rec-timer" style="font-size: 16px; color: var(--muted);"></div>
+                  <input type="file" id="refine-audio-input" accept="audio/*" />
+                  <audio id="refine-audio-preview" class="preview-media hidden" controls style="max-height: 64px;"></audio>
+                </div>
+
                 <div>
                   <button type="button" id="refine-ai-btn" class="secondary small">Aggiorna con AI</button>
                 </div>
@@ -1213,6 +1228,7 @@
     let currentPhotoDataUrls = [];
     let currentAudioMedia = null;
     let currentVideoMedia = null;
+    let currentRefineAudioMedia = null;
 
     let extractedRecipesQueue = [];
     let activeExtractedIndex = 0;
@@ -1223,6 +1239,11 @@
     let recChunks = [];
     let recInterval = null;
     let recSeconds = 0;
+
+    let refineMediaRecorder = null;
+    let refineRecChunks = [];
+    let refineRecInterval = null;
+    let refineRecSeconds = 0;
 
     let unsubscribeRecipes = null;
     let unsubscribeSettings = null;
@@ -1304,6 +1325,12 @@
     const aiDoubtsList = document.getElementById("ai-doubts-list");
 
     const refineInstructionInput = document.getElementById("refine-instruction-input");
+    const startRefineRecBtn = document.getElementById("start-refine-rec-btn");
+    const stopRefineRecBtn = document.getElementById("stop-refine-rec-btn");
+    const clearRefineAudioBtn = document.getElementById("clear-refine-audio-btn");
+    const refineRecTimer = document.getElementById("refine-rec-timer");
+    const refineAudioInput = document.getElementById("refine-audio-input");
+    const refineAudioPreview = document.getElementById("refine-audio-preview");
     const refineAiBtn = document.getElementById("refine-ai-btn");
     const refineReplyText = document.getElementById("refine-reply-text");
 
@@ -2018,6 +2045,77 @@
       videoPreview.classList.remove("hidden");
     });
 
+    function clearRefineAudio() {
+      currentRefineAudioMedia = null;
+      refineAudioInput.value = "";
+      refineAudioPreview.src = "";
+      refineAudioPreview.classList.add("hidden");
+      refineRecTimer.textContent = "";
+      clearRefineAudioBtn.classList.add("hidden");
+    }
+
+    startRefineRecBtn.addEventListener("click", async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        refineRecChunks = [];
+        refineMediaRecorder = new MediaRecorder(stream);
+        refineMediaRecorder.ondataavailable = (ev) => {
+          if (ev.data.size > 0) refineRecChunks.push(ev.data);
+        };
+        refineMediaRecorder.onstop = async () => {
+          stream.getTracks().forEach((t) => t.stop());
+          const blob = new Blob(refineRecChunks, { type: refineMediaRecorder.mimeType || "audio/webm" });
+          const converted = await fileToBase64(new File([blob], "istruzione-dialogo.webm", { type: blob.type }));
+          currentRefineAudioMedia = { base64: converted.base64, mimeType: blob.type };
+          refineAudioPreview.src = URL.createObjectURL(blob);
+          refineAudioPreview.classList.remove("hidden");
+          clearRefineAudioBtn.classList.remove("hidden");
+        };
+        refineMediaRecorder.start();
+        refineRecSeconds = 0;
+        refineRecTimer.textContent = "Registrazione istruzione in corso: 0s";
+        refineRecInterval = setInterval(() => {
+          refineRecSeconds += 1;
+          refineRecTimer.textContent = `Registrazione istruzione in corso: ${refineRecSeconds}s`;
+        }, 1000);
+        startRefineRecBtn.disabled = true;
+        stopRefineRecBtn.disabled = false;
+      } catch (err) {
+        console.error(err);
+        refineReplyText.textContent = "Microfono non disponibile o permesso negato. Puoi caricare un file audio.";
+      }
+    });
+
+    stopRefineRecBtn.addEventListener("click", () => {
+      if (refineMediaRecorder && refineMediaRecorder.state !== "inactive") {
+        refineMediaRecorder.stop();
+      }
+      clearInterval(refineRecInterval);
+      startRefineRecBtn.disabled = false;
+      stopRefineRecBtn.disabled = true;
+      refineRecTimer.textContent = `Audio istruzione pronto (${refineRecSeconds}s).`;
+    });
+
+    refineAudioInput.addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (file.size > 18 * 1024 * 1024) {
+        refineReplyText.textContent = "File audio troppo grande (meglio sotto i 18 MB).";
+        return;
+      }
+      const converted = await fileToBase64(file);
+      currentRefineAudioMedia = { base64: converted.base64, mimeType: converted.mimeType };
+      refineAudioPreview.src = URL.createObjectURL(file);
+      refineAudioPreview.classList.remove("hidden");
+      refineRecTimer.textContent = `Audio caricato: ${file.name}`;
+      clearRefineAudioBtn.classList.remove("hidden");
+    });
+
+    clearRefineAudioBtn.addEventListener("click", () => {
+      clearRefineAudio();
+      refineReplyText.textContent = "Audio rimosso.";
+    });
+
     function showAiStatus(text, isOk = false) {
       aiStatusMsg.textContent = text;
       aiStatusMsg.classList.toggle("ok", isOk);
@@ -2389,8 +2487,10 @@
 
     refineAiBtn.addEventListener("click", async () => {
       const instruction = refineInstructionInput.value.trim();
-      if (!instruction) {
-        refineReplyText.textContent = "Scrivi cosa vuoi modificare, chiarire o completare in questa ricetta.";
+      const hasAudioInstruction = Boolean(currentRefineAudioMedia?.base64);
+
+      if (!instruction && !hasAudioInstruction) {
+        refineReplyText.textContent = "Scrivi cosa vuoi modificare oppure registra/carica un audio di istruzioni.";
         return;
       }
 
@@ -2404,14 +2504,16 @@
       };
 
       refineAiBtn.disabled = true;
-      refineReplyText.textContent = "Sto aggiornando la ricetta in base alle tue indicazioni...";
+      refineReplyText.textContent = hasAudioInstruction
+        ? "Sto ascoltando l'audio e aggiornando la ricetta..."
+        : "Sto aggiornando la ricetta in base alle tue indicazioni...";
 
       try {
         const prompt =
           `Stai aiutando l'utente a perfezionare una ricetta prima di salvarla nell'archivio.\n` +
           `Categorie consentite: ${categories.join(", ")}.\n` +
           `Bozza attuale:\n${JSON.stringify(currentDraft, null, 2)}\n\n` +
-          `Richiesta dell'utente: "${instruction}"\n\n` +
+          `Istruzione testuale dell'utente: ${instruction || "(nessun testo, segui l'audio allegato)"}\n\n` +
           `Rispondi ESCLUSIVAMENTE con un JSON valido così strutturato:\n` +
           `{\n` +
           `  "assistantNote": "Breve spiegazione di come hai aggiornato la ricetta",\n` +
@@ -2424,6 +2526,17 @@
           `}`;
 
         const parts = [{ text: prompt }];
+
+        if (hasAudioInstruction) {
+          parts.push({ text: "Audio con le istruzioni dell'utente per aggiornare la ricetta:" });
+          parts.push({
+            inlineData: {
+              mimeType: currentRefineAudioMedia.mimeType,
+              data: currentRefineAudioMedia.base64
+            }
+          });
+        }
+
         const refPhotos = currentPhotoDataUrls.length > 0
           ? currentPhotoDataUrls
           : (editingRecipePhotoDataUrl ? [editingRecipePhotoDataUrl] : []);
@@ -2459,6 +2572,7 @@
         }
 
         refineInstructionInput.value = "";
+        clearRefineAudio();
         refineReplyText.textContent = updated.assistantNote || "Bozza aggiornata.";
       } catch (err) {
         refineReplyText.textContent = err.message || "Errore durante l'aggiornamento con AI.";
@@ -2544,6 +2658,7 @@
       recipeForm.reset();
       refineInstructionInput.value = "";
       refineReplyText.textContent = "";
+      clearRefineAudio();
       currentDebugReport = null;
       debugResultBox.classList.add("hidden");
       debugPromptBox.classList.remove("hidden");
