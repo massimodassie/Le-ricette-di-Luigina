@@ -23,6 +23,8 @@
       --accent-soft: rgba(143, 54, 34, 0.1);
       --draft-accent: #b87414;
       --draft-soft: rgba(223, 160, 54, 0.16);
+      --course-accent: #2f5e4e;
+      --course-soft: rgba(47, 94, 78, 0.13);
       --border: rgba(110, 98, 84, 0.22);
       --warn-bg: #fff5df;
       --warn-border: #dfa036;
@@ -173,6 +175,12 @@
       border-color: rgba(223, 160, 54, 0.45);
     }
 
+    .count-pill.course-pill {
+      background: var(--course-soft);
+      color: var(--course-accent);
+      border-color: rgba(47, 94, 78, 0.35);
+    }
+
     .sidebar-footer {
       margin-top: 14px;
       padding-top: 12px;
@@ -203,8 +211,8 @@
 
     .search-bar-row {
       display: grid;
-      grid-template-columns: minmax(0, 1.5fr) minmax(200px, 0.8fr);
-      gap: 14px;
+      grid-template-columns: minmax(0, 1.4fr) minmax(180px, 0.75fr) auto;
+      gap: 12px;
       align-items: center;
     }
 
@@ -259,6 +267,11 @@
       border: 1px solid rgba(110, 98, 84, 0.18);
     }
 
+    .category-container.is-course-group {
+      background: rgba(246, 251, 249, 0.68);
+      border-color: rgba(47, 94, 78, 0.24);
+    }
+
     .category-header {
       display: flex;
       align-items: center;
@@ -279,6 +292,13 @@
       width: 28px;
       height: 28px;
       color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .course-icon {
+      width: 28px;
+      height: 28px;
+      color: var(--course-accent);
       flex-shrink: 0;
     }
 
@@ -350,9 +370,15 @@
       margin-top: 4px;
     }
 
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
     .draft-tag {
       display: inline-block;
-      margin-top: 6px;
       padding: 2px 8px;
       border-radius: 6px;
       font-family: var(--font-hand);
@@ -361,6 +387,40 @@
       background: var(--draft-soft);
       color: #8a5308;
       border: 1px solid rgba(223, 160, 54, 0.45);
+    }
+
+    .course-tag {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 6px;
+      font-family: var(--font-hand);
+      font-size: 15px;
+      font-weight: 700;
+      background: var(--course-soft);
+      color: var(--course-accent);
+      border: 1px solid rgba(47, 94, 78, 0.35);
+    }
+
+    .dup-pair-card {
+      padding: 16px;
+      border-radius: var(--radius-md);
+      background: rgba(255, 253, 249, 0.85);
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .dup-score-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 15px;
+      font-weight: 700;
+      background: var(--warn-bg);
+      color: #8a5308;
+      border: 1px solid var(--warn-border);
+      width: fit-content;
     }
 
     .pill-actions {
@@ -829,6 +889,10 @@
             <span>Archivio ricette</span>
             <span id="sidebar-count" class="count-pill">0</span>
           </button>
+          <button type="button" id="nav-courses-btn" class="nav-link">
+            <span>Corsi</span>
+            <span id="courses-count" class="count-pill course-pill">0</span>
+          </button>
           <button type="button" id="nav-drafts-btn" class="nav-link hidden">
             <span>Da controllare / strutturare</span>
             <span id="drafts-count" class="count-pill draft-pill">0</span>
@@ -848,8 +912,27 @@
 
       <main class="main-content">
         <div class="search-bar-row">
-          <input type="search" id="search-input" class="floating-input" placeholder="Cerca per titolo, ingrediente o origine..." />
+          <input type="search" id="search-input" class="floating-input" placeholder="Cerca per titolo, ingrediente, corso o origine..." />
           <select id="category-filter" class="floating-input"></select>
+          <button type="button" id="find-duplicates-btn" class="secondary small hidden" style="padding: 11px 14px; white-space: nowrap;">
+            Cerca doppioni / simili
+          </button>
+        </div>
+
+        <!-- ANALISI DOPPIONI / RICETTE SIMILI -->
+        <div id="duplicates-panel" class="panel-glass hidden">
+          <div class="topbar">
+            <div>
+              <h2 style="margin: 0;">Analisi doppioni e ricette simili</h2>
+              <div style="font-size: 17px; color: var(--muted);">Confronta titoli e ingredienti per individuare eventuali ricette duplicate o varianti molto vicine.</div>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="button" id="ai-deep-duplicates-btn" class="secondary small">Verifica anche con AI</button>
+              <button type="button" id="close-duplicates-btn" class="secondary small">Chiudi</button>
+            </div>
+          </div>
+          <div id="duplicates-status" class="msg ok hidden"></div>
+          <div id="duplicates-results" class="stack" style="margin-top: 14px;"></div>
         </div>
 
         <div id="setup-card" class="panel-glass hidden">
@@ -858,7 +941,7 @@
             <button type="button" id="close-setup-btn" class="secondary small">Chiudi</button>
           </div>
           <p style="color: var(--muted); font-size: 17px;">
-            Personalizza le categorie dell'archivio, il modello Gemini e le regole di catalogazione AI. Le modifiche si applicano subito a tutti gli utenti.
+            Personalizza categorie, corsi, modello Gemini e regole di catalogazione AI. Le modifiche si applicano subito a tutti gli utenti.
           </p>
 
           <h3>Categorie ricette</h3>
@@ -867,6 +950,15 @@
             <button type="button" id="add-cat-btn" style="flex: 0 0 auto;">+ Aggiungi categoria</button>
           </div>
           <div id="setup-cat-list" class="cat-list"></div>
+
+          <hr style="border: 0; border-top: 1px solid var(--border); margin: 16px 0;" />
+
+          <h3>Corsi di cucina</h3>
+          <div class="row">
+            <input type="text" id="new-course-input" placeholder="Nome nuovo corso (es. Corso Pasticceria Base, Corso Lievitati...)" />
+            <button type="button" id="add-course-btn" style="flex: 0 0 auto;">+ Aggiungi corso</button>
+          </div>
+          <div id="setup-course-list" class="cat-list"></div>
 
           <hr style="border: 0; border-top: 1px solid var(--border); margin: 16px 0;" />
 
@@ -1029,6 +1121,17 @@
                 </div>
               </div>
 
+              <div class="row">
+                <div>
+                  <label for="rec-course-select">Corso (opzionale)</label>
+                  <select id="rec-course-select"></select>
+                </div>
+                <div>
+                  <label for="rec-course-custom">Oppure scrivi un nuovo corso al volo</label>
+                  <input type="text" id="rec-course-custom" placeholder="Es. Corso Pasticceria Autunnale" />
+                </div>
+              </div>
+
               <div>
                 <label for="rec-origin">Origine / Note (es. Scritto a mano, Stampa/Bimby...)</label>
                 <input type="text" id="rec-origin" placeholder="Es. Pagina con ricetta stampata e nota a mano" />
@@ -1115,6 +1218,7 @@
         <button type="button" id="close-modal-btn" class="secondary small">Chiudi</button>
       </div>
       <div id="detail-meta" class="recipe-meta"></div>
+      <div id="detail-course-badge-wrap" class="tag-row hidden"></div>
 
       <div class="sheet-section-title">Ingredienti</div>
       <div id="detail-ingredients" class="sheet-text"></div>
@@ -1246,10 +1350,16 @@
       return `<svg class="${cssClass}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
     }
 
+    function getCourseIconSvg(cssClass = "course-icon") {
+      return `<svg class="${cssClass}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/><circle cx="18" cy="18" r="2.5"/></svg>`;
+    }
+
     let currentRole = null;
-    let activeListView = "archive";
+    let activeListView = "archive"; // "archive" | "courses" | "drafts"
     let categories = [...DEFAULT_CATEGORIES];
     let draftCategories = [...DEFAULT_CATEGORIES];
+    let courses = [];
+    let draftCourses = [];
     let aiRules = DEFAULT_AI_RULES;
     let allRecipes = [];
 
@@ -1290,6 +1400,8 @@
 
     const navArchiveBtn = document.getElementById("nav-archive-btn");
     const sidebarCount = document.getElementById("sidebar-count");
+    const navCoursesBtn = document.getElementById("nav-courses-btn");
+    const coursesCount = document.getElementById("courses-count");
     const navDraftsBtn = document.getElementById("nav-drafts-btn");
     const draftsCount = document.getElementById("drafts-count");
     const openNewBtn = document.getElementById("open-new-btn");
@@ -1299,6 +1411,9 @@
     const newCatInput = document.getElementById("new-cat-input");
     const addCatBtn = document.getElementById("add-cat-btn");
     const setupCatList = document.getElementById("setup-cat-list");
+    const newCourseInput = document.getElementById("new-course-input");
+    const addCourseBtn = document.getElementById("add-course-btn");
+    const setupCourseList = document.getElementById("setup-course-list");
     const aiRulesInput = document.getElementById("ai-rules-input");
     const proxyUrlInput = document.getElementById("proxy-url-input");
     const proxySecretInput = document.getElementById("proxy-secret-input");
@@ -1306,6 +1421,13 @@
     const geminiModelSelect = document.getElementById("gemini-model-select");
     const saveSetupBtn = document.getElementById("save-setup-btn");
     const setupMsg = document.getElementById("setup-msg");
+
+    const findDuplicatesBtn = document.getElementById("find-duplicates-btn");
+    const duplicatesPanel = document.getElementById("duplicates-panel");
+    const closeDuplicatesBtn = document.getElementById("close-duplicates-btn");
+    const aiDeepDuplicatesBtn = document.getElementById("ai-deep-duplicates-btn");
+    const duplicatesStatus = document.getElementById("duplicates-status");
+    const duplicatesResults = document.getElementById("duplicates-results");
 
     const newRecipeCard = document.getElementById("new-recipe-card");
     const editorHeading = document.getElementById("editor-heading");
@@ -1388,6 +1510,8 @@
     const resetFormBtn = document.getElementById("reset-form-btn");
     const recipeMsg = document.getElementById("recipe-msg");
     const recCategorySelect = document.getElementById("rec-category");
+    const recCourseSelect = document.getElementById("rec-course-select");
+    const recCourseCustom = document.getElementById("rec-course-custom");
     const searchInput = document.getElementById("search-input");
     const categoryFilter = document.getElementById("category-filter");
     const archiveSectionTitle = document.getElementById("archive-section-title");
@@ -1396,6 +1520,7 @@
 
     const detailModal = document.getElementById("detail-modal");
     const closeModalBtn = document.getElementById("close-modal-btn");
+    const detailCourseBadgeWrap = document.getElementById("detail-course-badge-wrap");
     const openSourcePhotoBtn = document.getElementById("open-source-photo-btn");
     const detailOriginCaption = document.getElementById("detail-origin-caption");
 
@@ -1436,6 +1561,7 @@
       openNewBtn.classList.toggle("active-nav", editorOpen);
       openSetupBtn.classList.toggle("active-nav", setupOpen);
       navArchiveBtn.classList.toggle("active-nav", !editorOpen && !setupOpen && activeListView === "archive");
+      navCoursesBtn.classList.toggle("active-nav", !editorOpen && !setupOpen && activeListView === "courses");
       navDraftsBtn.classList.toggle("active-nav", !editorOpen && !setupOpen && activeListView === "drafts");
     }
 
@@ -1505,11 +1631,14 @@
         if (canEditRecipes()) {
           openNewBtn.classList.remove("hidden");
           navDraftsBtn.classList.remove("hidden");
+          findDuplicatesBtn.classList.remove("hidden");
         } else {
           openNewBtn.classList.add("hidden");
           navDraftsBtn.classList.add("hidden");
+          findDuplicatesBtn.classList.add("hidden");
+          duplicatesPanel.classList.add("hidden");
           newRecipeCard.classList.add("hidden");
-          activeListView = "archive";
+          if (activeListView === "drafts") activeListView = "archive";
         }
 
         if (currentRole === "admin") {
@@ -1539,6 +1668,15 @@
       renderRecipes();
     });
 
+    navCoursesBtn.addEventListener("click", () => {
+      stopLiveCamera();
+      activeListView = "courses";
+      newRecipeCard.classList.add("hidden");
+      setupCard.classList.add("hidden");
+      updateNavActiveState();
+      renderRecipes();
+    });
+
     navDraftsBtn.addEventListener("click", () => {
       if (!canEditRecipes()) return;
       stopLiveCamera();
@@ -1549,6 +1687,31 @@
       renderRecipes();
     });
 
+    function getAllKnownCourses() {
+      const set = new Set(courses);
+      allRecipes.forEach((r) => {
+        if (r.course && String(r.course).trim()) {
+          set.add(String(r.course).trim());
+        }
+      });
+      return Array.from(set);
+    }
+
+    function syncCourseDropdowns(selectedValue = "") {
+      const known = getAllKnownCourses();
+      const prev = selectedValue || recCourseSelect.value || "";
+      recCourseSelect.innerHTML = `<option value="">Nessun corso</option>`;
+      known.forEach((c) => {
+        const opt = document.createElement("option");
+        opt.value = c;
+        opt.textContent = c;
+        recCourseSelect.appendChild(opt);
+      });
+      if (known.includes(prev)) {
+        recCourseSelect.value = prev;
+      }
+    }
+
     function listenToSettings() {
       if (unsubscribeSettings) unsubscribeSettings();
       const settingsRef = doc(db, "settings", "general");
@@ -1557,6 +1720,9 @@
           const data = snap.data();
           if (Array.isArray(data.categories) && data.categories.length > 0) {
             categories = [...data.categories];
+          }
+          if (Array.isArray(data.courses)) {
+            courses = data.courses.map((c) => String(c).trim()).filter(Boolean);
           }
           if (typeof data.aiRules === "string" && data.aiRules.trim()) {
             aiRules = data.aiRules;
@@ -1572,9 +1738,11 @@
           }
         } else {
           categories = [...DEFAULT_CATEGORIES];
+          courses = [];
           aiRules = DEFAULT_AI_RULES;
         }
         syncCategoryDropdowns();
+        syncCourseDropdowns();
         renderRecipes();
       });
     }
@@ -1610,6 +1778,7 @@
       const opening = setupCard.classList.contains("hidden");
       if (opening) {
         draftCategories = [...categories];
+        draftCourses = [...courses];
         aiRulesInput.value = aiRules;
         proxyUrlInput.value = localStorage.getItem("luigina_proxy_url") || "";
         proxySecretInput.value = localStorage.getItem("luigina_proxy_secret") || "";
@@ -1617,6 +1786,7 @@
         geminiModelSelect.value = getConfiguredModel();
         setupMsg.classList.add("hidden");
         renderSetupCategories();
+        renderSetupCourses();
         setupCard.classList.remove("hidden");
         newRecipeCard.classList.add("hidden");
       } else {
@@ -1678,6 +1848,44 @@
       renderSetupCategories();
     });
 
+    function renderSetupCourses() {
+      setupCourseList.innerHTML = "";
+      if (draftCourses.length === 0) {
+        setupCourseList.innerHTML = `<p style="color:var(--muted); margin:4px 0;">Nessun corso configurato. Puoi aggiungerne uno qui o scriverlo direttamente quando inserisci una ricetta.</p>`;
+        return;
+      }
+      draftCourses.forEach((courseName, idx) => {
+        const row = document.createElement("div");
+        row.className = "cat-chip-row";
+        row.innerHTML = `
+          <div style="display:flex; align-items:center; gap:8px;">
+            ${getCourseIconSvg("course-icon")}
+            <strong>${escapeHtml(courseName)}</strong>
+          </div>
+          <div style="display: flex; gap: 6px;">
+            <button type="button" class="danger small remove-course-btn">Rimuovi</button>
+          </div>
+        `;
+        row.querySelector(".remove-course-btn").addEventListener("click", () => {
+          draftCourses.splice(idx, 1);
+          renderSetupCourses();
+        });
+        setupCourseList.appendChild(row);
+      });
+    }
+
+    addCourseBtn.addEventListener("click", () => {
+      const val = newCourseInput.value.trim();
+      if (!val) return;
+      if (draftCourses.some((c) => c.toLowerCase() === val.toLowerCase())) {
+        alert("Questo corso è già presente.");
+        return;
+      }
+      draftCourses.push(val);
+      newCourseInput.value = "";
+      renderSetupCourses();
+    });
+
     saveSetupBtn.addEventListener("click", async () => {
       setupMsg.classList.add("hidden");
       const proxyUrl = proxyUrlInput.value.trim();
@@ -1701,6 +1909,7 @@
       try {
         await setDoc(doc(db, "settings", "general"), {
           categories: draftCategories,
+          courses: draftCourses,
           aiRules: aiRulesInput.value.trim() || DEFAULT_AI_RULES,
           proxyUrl,
           proxySecret,
@@ -1765,6 +1974,10 @@
         recCategorySelect.value = categories.includes(recipe.category)
           ? recipe.category
           : (categories[categories.length - 1] || "");
+
+        syncCourseDropdowns(recipe.course || "");
+        recCourseCustom.value = "";
+
         document.getElementById("rec-origin").value = recipe.origin || "";
         document.getElementById("rec-ingredients").value = recipe.ingredients || "";
         document.getElementById("rec-steps").value = recipe.steps || "";
@@ -1806,6 +2019,8 @@
         editingIndicator.classList.add("hidden");
         acquisitionSection.classList.remove("hidden");
         saveRecipeBtn.textContent = "Conferma e salva definitiva";
+        syncCourseDropdowns("");
+        recCourseCustom.value = "";
       }
     }
 
@@ -1976,6 +2191,28 @@
       await handleIncomingPhotoFiles(files);
     });
 
+    function resolveSelectedCourse() {
+      const custom = recCourseCustom.value.trim();
+      if (custom) return custom;
+      return recCourseSelect.value.trim();
+    }
+
+    async function ensureCourseSavedIfNew(courseName) {
+      if (!courseName || currentRole !== "admin") return;
+      if (!courses.some((c) => c.toLowerCase() === courseName.toLowerCase())) {
+        const updatedCourses = [...courses, courseName];
+        try {
+          await setDoc(doc(db, "settings", "general"), {
+            courses: updatedCourses,
+            updatedAt: serverTimestamp(),
+            updatedBy: auth.currentUser.uid
+          }, { merge: true });
+        } catch (err) {
+          console.error("Errore salvataggio nuovo corso:", err);
+        }
+      }
+    }
+
     async function saveRecipeRecord({ status = "published", quickMode = false } = {}) {
       if (!canEditRecipes()) return;
       stopLiveCamera();
@@ -1985,6 +2222,7 @@
       const rawTitle = document.getElementById("rec-title").value.trim();
       const title = rawTitle || (status === "draft" ? `Ricetta scansionata (${nowStr})` : "");
       const category = recCategorySelect.value || (categories[categories.length - 1] || "Altro");
+      const course = resolveSelectedCourse();
       const rawOrigin = document.getElementById("rec-origin").value.trim();
       const origin = rawOrigin || (currentPhotoDataUrls.length > 0 ? `Scansione foto (${currentPhotoDataUrls.length} fogli)` : "");
       const ingredients = document.getElementById("rec-ingredients").value.trim() ||
@@ -2005,6 +2243,7 @@
       const payload = {
         title,
         category,
+        course: course || "",
         origin,
         ingredients,
         steps,
@@ -2015,6 +2254,8 @@
       };
 
       try {
+        await ensureCourseSavedIfNew(course);
+
         if (editingRecipeId) {
           await updateDoc(doc(db, "recipes", editingRecipeId), {
             ...payload,
@@ -2024,7 +2265,7 @@
           clearRecipeForm(false);
           setEditorMode(false);
           newRecipeCard.classList.add("hidden");
-          activeListView = status === "draft" ? "drafts" : "archive";
+          activeListView = status === "draft" ? "drafts" : (course ? "courses" : "archive");
           updateNavActiveState();
           renderRecipes();
         } else {
@@ -2368,6 +2609,7 @@
         category: categories.includes(item?.category)
           ? item.category
           : (categories[categories.length - 1] || "Altro"),
+        course: item?.course ? String(item.course).trim() : "",
         origin: item?.origin || "",
         ingredients: Array.isArray(item?.ingredients)
           ? item.ingredients.join("\n")
@@ -2390,6 +2632,8 @@
       recCategorySelect.value = categories.includes(item.category)
         ? item.category
         : (categories[categories.length - 1] || "");
+      syncCourseDropdowns(item.course || "");
+      recCourseCustom.value = "";
       document.getElementById("rec-origin").value = item.origin;
       document.getElementById("rec-ingredients").value = item.ingredients;
       document.getElementById("rec-steps").value = item.steps;
@@ -2427,9 +2671,11 @@
     }
 
     async function callGeminiRecipeExtractor({ photoDataUrls = [], audioMedia = null, videoMedia = null, rawText = "" }) {
+      const knownCourses = getAllKnownCourses();
       const systemPrompt =
         `Sei un assistente che digitalizza ricette di famiglia (anche su più fogli/pagine per la stessa ricetta, oppure con PIÙ ricette sullo stesso foglio o su più fogli, con parti stampate/a PC e parti scritte a mano in corsivo).\n` +
         `Categorie consentite: ${categories.join(", ")}.\n` +
+        (knownCourses.length > 0 ? `Corsi già esistenti (usa uno di questi se esplicitamente indicato): ${knownCourses.join(", ")}.\n` : "") +
         `Regole dell'utente: ${aiRules}\n\n` +
         `Rispondi ESCLUSIVAMENTE con un oggetto JSON valido con questa struttura:\n` +
         `{\n` +
@@ -2437,6 +2683,7 @@
         `    {\n` +
         `      "title": "Titolo della ricetta",\n` +
         `      "category": "Una delle categorie consentite",\n` +
+        `      "course": "Nome eventuale corso se indicato, altrimenti stringa vuota",\n` +
         `      "origin": "Es. Stampata/Bimby oppure Scritto a mano (2 fogli)",\n` +
         `      "ingredients": "Un ingrediente per riga",\n` +
         `      "steps": "Procedimento ordinato e leggibile",\n` +
@@ -2604,6 +2851,7 @@
       const currentDraft = {
         title: document.getElementById("rec-title").value.trim(),
         category: recCategorySelect.value,
+        course: resolveSelectedCourse(),
         origin: document.getElementById("rec-origin").value.trim(),
         ingredients: document.getElementById("rec-ingredients").value.trim(),
         steps: document.getElementById("rec-steps").value.trim(),
@@ -2626,6 +2874,7 @@
           `  "assistantNote": "Breve spiegazione di come hai aggiornato la ricetta",\n` +
           `  "title": "...",\n` +
           `  "category": "...",\n` +
+          `  "course": "...",\n` +
           `  "origin": "...",\n` +
           `  "ingredients": "...",\n` +
           `  "steps": "...",\n` +
@@ -2668,6 +2917,8 @@
 
         document.getElementById("rec-title").value = norm.title;
         recCategorySelect.value = norm.category;
+        syncCourseDropdowns(norm.course || currentDraft.course || "");
+        recCourseCustom.value = "";
         document.getElementById("rec-origin").value = norm.origin;
         document.getElementById("rec-ingredients").value = norm.ingredients;
         document.getElementById("rec-steps").value = norm.steps;
@@ -2761,9 +3012,217 @@
       }
     });
 
+    // --- ANALISI DOPPIONI E RICETTE SIMILI ---
+    function tokenizeText(str = "") {
+      return String(str)
+        .toLowerCase()
+        .replace(/[^a-zàèéìòóù0-9\s]/gi, " ")
+        .split(/\s+/)
+        .filter((w) => w.length >= 3);
+    }
+
+    function jaccardSimilarity(tokensA, tokensB) {
+      const setA = new Set(tokensA);
+      const setB = new Set(tokensB);
+      if (setA.size === 0 || setB.size === 0) return 0;
+      let inter = 0;
+      setA.forEach((t) => {
+        if (setB.has(t)) inter += 1;
+      });
+      const union = new Set([...setA, ...setB]).size;
+      return union === 0 ? 0 : inter / union;
+    }
+
+    function findHeuristicDuplicates(recipes) {
+      const published = recipes.filter((r) => !isDraftRecipe(r));
+      const pairs = [];
+
+      for (let i = 0; i < published.length; i++) {
+        for (let j = i + 1; j < published.length; j++) {
+          const a = published[i];
+          const b = published[j];
+          const titleSim = jaccardSimilarity(tokenizeText(a.title), tokenizeText(b.title));
+          const ingSim = jaccardSimilarity(tokenizeText(a.ingredients), tokenizeText(b.ingredients));
+          const sameNormTitle =
+            String(a.title || "").trim().toLowerCase() === String(b.title || "").trim().toLowerCase() &&
+            String(a.title || "").trim().length > 0;
+
+          const score = sameNormTitle
+            ? 0.98
+            : Math.min(0.99, titleSim * 0.55 + ingSim * 0.45);
+
+          if (sameNormTitle || titleSim >= 0.45 || ingSim >= 0.42 || score >= 0.42) {
+            const reasons = [];
+            if (sameNormTitle) reasons.push("stesso titolo");
+            else if (titleSim >= 0.45) reasons.push(`titolo simile (${Math.round(titleSim * 100)}%)`);
+            if (ingSim >= 0.42) reasons.push(`ingredienti affini (${Math.round(ingSim * 100)}%)`);
+
+            pairs.push({
+              recipeA: a,
+              recipeB: b,
+              score: Math.round(score * 100),
+              reason: reasons.join(" • ") || "somiglianza testuale"
+            });
+          }
+        }
+      }
+
+      return pairs.sort((x, y) => y.score - x.score);
+    }
+
+    function openRecipeForEditing(r) {
+      if (!canEditRecipes()) return;
+      clearRecipeForm(false);
+      setEditorMode(true, r);
+      newRecipeCard.classList.remove("hidden");
+      setupCard.classList.add("hidden");
+      recipeMsg.classList.add("hidden");
+      updateNavActiveState();
+      newRecipeCard.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function renderDuplicatePairs(pairs, extraNotes = []) {
+      duplicatesResults.innerHTML = "";
+      if (pairs.length === 0 && extraNotes.length === 0) {
+        duplicatesResults.innerHTML = `<p style="color:var(--muted);">Nessun doppione o ricetta molto simile rilevata nell'archivio.</p>`;
+        return;
+      }
+
+      pairs.forEach((p) => {
+        const card = document.createElement("div");
+        card.className = "dup-pair-card";
+        card.innerHTML = `
+          <div class="topbar">
+            <span class="dup-score-badge">Affinità ${p.score}% — ${escapeHtml(p.reason)}</span>
+          </div>
+          <div class="row">
+            <div>
+              <strong>${escapeHtml(p.recipeA.title || "Senza titolo")}</strong>
+              <div class="recipe-meta">${escapeHtml([p.recipeA.category, p.recipeA.course ? `Corso: ${p.recipeA.course}` : ""].filter(Boolean).join(" • "))}</div>
+              <div class="pill-actions" style="margin-top:6px;">
+                <button type="button" class="pill-btn open-a-btn">Apri A</button>
+                <button type="button" class="pill-btn edit-a-btn">Modifica A</button>
+              </div>
+            </div>
+            <div>
+              <strong>${escapeHtml(p.recipeB.title || "Senza titolo")}</strong>
+              <div class="recipe-meta">${escapeHtml([p.recipeB.category, p.recipeB.course ? `Corso: ${p.recipeB.course}` : ""].filter(Boolean).join(" • "))}</div>
+              <div class="pill-actions" style="margin-top:6px;">
+                <button type="button" class="pill-btn open-b-btn">Apri B</button>
+                <button type="button" class="pill-btn edit-b-btn">Modifica B</button>
+              </div>
+            </div>
+          </div>
+        `;
+        card.querySelector(".open-a-btn").addEventListener("click", () => openDetailForRecipe(p.recipeA));
+        card.querySelector(".open-b-btn").addEventListener("click", () => openDetailForRecipe(p.recipeB));
+        card.querySelector(".edit-a-btn").addEventListener("click", () => openRecipeForEditing(p.recipeA));
+        card.querySelector(".edit-b-btn").addEventListener("click", () => openRecipeForEditing(p.recipeB));
+        duplicatesResults.appendChild(card);
+      });
+
+      extraNotes.forEach((note) => {
+        const card = document.createElement("div");
+        card.className = "dup-pair-card";
+        card.innerHTML = `<span class="dup-score-badge">Segnalazione AI</span><div>${escapeHtml(note)}</div>`;
+        duplicatesResults.appendChild(card);
+      });
+    }
+
+    findDuplicatesBtn.addEventListener("click", () => {
+      if (!canEditRecipes()) return;
+      const opening = duplicatesPanel.classList.contains("hidden");
+      if (!opening) {
+        duplicatesPanel.classList.add("hidden");
+        return;
+      }
+      duplicatesStatus.classList.add("hidden");
+      const pairs = findHeuristicDuplicates(allRecipes);
+      renderDuplicatePairs(pairs);
+      duplicatesPanel.classList.remove("hidden");
+    });
+
+    closeDuplicatesBtn.addEventListener("click", () => {
+      duplicatesPanel.classList.add("hidden");
+    });
+
+    aiDeepDuplicatesBtn.addEventListener("click", async () => {
+      const published = allRecipes.filter((r) => !isDraftRecipe(r));
+      if (published.length < 2) {
+        duplicatesStatus.textContent = "Servono almeno 2 ricette definitive per un confronto AI.";
+        duplicatesStatus.classList.remove("hidden");
+        return;
+      }
+      aiDeepDuplicatesBtn.disabled = true;
+      duplicatesStatus.textContent = `Analisi semantica di ${published.length} ricette in corso con ${getConfiguredModel()}...`;
+      duplicatesStatus.classList.remove("hidden");
+
+      try {
+        const compactList = published.slice(0, 60).map((r) => ({
+          id: r.id,
+          title: r.title,
+          category: r.category,
+          ingredients: String(r.ingredients || "").slice(0, 260)
+        }));
+
+        const prompt =
+          `Analizza questo elenco di ricette e individua eventuali doppioni o varianti molto simili (anche se scritte con nomi leggermente diversi).\n` +
+          `Elenco:\n${JSON.stringify(compactList, null, 2)}\n\n` +
+          `Rispondi ESCLUSIVAMENTE con un JSON valido:\n` +
+          `{\n` +
+          `  "matches": [\n` +
+          `    { "idA": "...", "idB": "...", "score": 85, "reason": "Spiegazione breve" }\n` +
+          `  ]\n` +
+          `}`;
+
+        const data = await invokeGemini({
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          generationConfig: { responseMimeType: "application/json", temperature: 0.2 }
+        });
+
+        const rawJson = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!rawJson) throw new Error("Risposta AI non valida.");
+        const parsed = JSON.parse(rawJson);
+        const aiMatches = Array.isArray(parsed.matches) ? parsed.matches : [];
+
+        const mapById = new Map(published.map((r) => [r.id, r]));
+        const combinedPairs = [...findHeuristicDuplicates(allRecipes)];
+        const extraNotes = [];
+
+        aiMatches.forEach((m) => {
+          const rA = mapById.get(m.idA);
+          const rB = mapById.get(m.idB);
+          if (rA && rB && rA.id !== rB.id) {
+            const exists = combinedPairs.some(
+              (p) => (p.recipeA.id === rA.id && p.recipeB.id === rB.id) || (p.recipeA.id === rB.id && p.recipeB.id === rA.id)
+            );
+            if (!exists) {
+              combinedPairs.push({
+                recipeA: rA,
+                recipeB: rB,
+                score: Number(m.score) || 75,
+                reason: m.reason || "Somiglianza segnalata dall'AI"
+              });
+            }
+          } else if (m.reason) {
+            extraNotes.push(m.reason);
+          }
+        });
+
+        renderDuplicatePairs(combinedPairs, extraNotes);
+        duplicatesStatus.textContent = `Analisi completata: trovate ${combinedPairs.length} coppie potenzialmente simili o duplicate.`;
+      } catch (err) {
+        duplicatesStatus.textContent = err.message || "Errore durante l'analisi AI dei doppioni.";
+      } finally {
+        aiDeepDuplicatesBtn.disabled = false;
+      }
+    });
+
     function clearRecipeForm(keepPhotoAndQueue = false) {
       stopLiveCamera();
       recipeForm.reset();
+      recCourseCustom.value = "";
+      syncCourseDropdowns("");
       refineInstructionInput.value = "";
       refineReplyText.textContent = "";
       clearRefineAudio();
@@ -2816,11 +3275,69 @@
       const q = query(collection(db, "recipes"), orderBy("createdAt", "desc"));
       unsubscribeRecipes = onSnapshot(q, (snapshot) => {
         allRecipes = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+        syncCourseDropdowns();
         renderRecipes();
       }, (err) => {
         console.error(err);
         recipesList.textContent = "Errore nel caricamento delle ricette.";
       });
+    }
+
+    function openDetailForRecipe(r) {
+      const draft = isDraftRecipe(r);
+      document.getElementById("detail-title").textContent = r.title || "Senza titolo";
+      document.getElementById("detail-meta").textContent = [r.category, draft ? "Bozza da strutturare" : ""].filter(Boolean).join(" • ");
+
+      if (r.course && String(r.course).trim()) {
+        detailCourseBadgeWrap.innerHTML = `<span class="course-tag">Corso: ${escapeHtml(String(r.course).trim())}</span>`;
+        detailCourseBadgeWrap.classList.remove("hidden");
+      } else {
+        detailCourseBadgeWrap.innerHTML = "";
+        detailCourseBadgeWrap.classList.add("hidden");
+      }
+
+      document.getElementById("detail-ingredients").textContent = r.ingredients || "";
+      document.getElementById("detail-steps").textContent = r.steps || "";
+
+      activeDetailPhotoUrl = r.photoDataUrl || null;
+      detailOriginCaption.textContent = r.origin ? `Fonte: ${r.origin}` : "Fonte originale";
+      if (activeDetailPhotoUrl) {
+        openSourcePhotoBtn.classList.remove("hidden");
+      } else {
+        openSourcePhotoBtn.classList.add("hidden");
+      }
+
+      const doubtsWrap = document.getElementById("detail-doubts-wrap");
+      const doubtsList = document.getElementById("detail-doubts-list");
+      if (Array.isArray(r.uncertainties) && r.uncertainties.length > 0) {
+        doubtsList.innerHTML = "";
+        r.uncertainties.forEach((u) => {
+          const li = document.createElement("li");
+          li.textContent = u;
+          doubtsList.appendChild(li);
+        });
+        doubtsWrap.classList.remove("hidden");
+      } else {
+        doubtsWrap.classList.add("hidden");
+      }
+
+      const debugWrap = document.getElementById("detail-debug-wrap");
+      const detailDebugSummary = document.getElementById("detail-debug-summary");
+      const detailDebugList = document.getElementById("detail-debug-list");
+      if (r.debugReport && (r.debugReport.summary || (r.debugReport.findings && r.debugReport.findings.length > 0))) {
+        detailDebugSummary.textContent = r.debugReport.summary || "";
+        detailDebugList.innerHTML = "";
+        (r.debugReport.findings || []).forEach((f) => {
+          const li = document.createElement("li");
+          li.textContent = f;
+          detailDebugList.appendChild(li);
+        });
+        debugWrap.classList.remove("hidden");
+      } else {
+        debugWrap.classList.add("hidden");
+      }
+
+      detailModal.classList.remove("hidden");
     }
 
     function createRecipeCardElement(r, draft) {
@@ -2829,6 +3346,12 @@
 
       const metaText = [r.category, r.origin].filter(Boolean).join(" • ");
       const hasDebugBadge = r.debugReport && r.debugReport.summary ? " • Debug salvato" : "";
+      const courseStr = r.course && String(r.course).trim() ? String(r.course).trim() : "";
+
+      const tagsHtml = [
+        courseStr ? `<span class="course-tag">Corso: ${escapeHtml(courseStr)}</span>` : "",
+        draft ? `<span class="draft-tag">DA STRUTTURARE</span>` : ""
+      ].filter(Boolean).join("");
 
       div.innerHTML = `
         <div>
@@ -2837,7 +3360,7 @@
             ${getCategoryIconSvg(r.category, "recipe-type-icon")}
           </div>
           <div class="recipe-meta">${escapeHtml(metaText + hasDebugBadge)}</div>
-          ${draft ? `<span class="draft-tag">DA STRUTTURARE</span>` : ""}
+          ${tagsHtml ? `<div class="tag-row">${tagsHtml}</div>` : ""}
         </div>
         <div class="pill-actions">
           <button type="button" class="pill-btn open-detail-btn">Apri</button>
@@ -2846,65 +3369,11 @@
         </div>
       `;
 
-      div.querySelector(".open-detail-btn").addEventListener("click", () => {
-        document.getElementById("detail-title").textContent = r.title || "Senza titolo";
-        document.getElementById("detail-meta").textContent = [r.category, draft ? "Bozza da strutturare" : ""].filter(Boolean).join(" • ");
-        document.getElementById("detail-ingredients").textContent = r.ingredients || "";
-        document.getElementById("detail-steps").textContent = r.steps || "";
-
-        activeDetailPhotoUrl = r.photoDataUrl || null;
-        detailOriginCaption.textContent = r.origin ? `Fonte: ${r.origin}` : "Fonte originale";
-        if (activeDetailPhotoUrl) {
-          openSourcePhotoBtn.classList.remove("hidden");
-        } else {
-          openSourcePhotoBtn.classList.add("hidden");
-        }
-
-        const doubtsWrap = document.getElementById("detail-doubts-wrap");
-        const doubtsList = document.getElementById("detail-doubts-list");
-        if (Array.isArray(r.uncertainties) && r.uncertainties.length > 0) {
-          doubtsList.innerHTML = "";
-          r.uncertainties.forEach((u) => {
-            const li = document.createElement("li");
-            li.textContent = u;
-            doubtsList.appendChild(li);
-          });
-          doubtsWrap.classList.remove("hidden");
-        } else {
-          doubtsWrap.classList.add("hidden");
-        }
-
-        const debugWrap = document.getElementById("detail-debug-wrap");
-        const detailDebugSummary = document.getElementById("detail-debug-summary");
-        const detailDebugList = document.getElementById("detail-debug-list");
-        if (r.debugReport && (r.debugReport.summary || (r.debugReport.findings && r.debugReport.findings.length > 0))) {
-          detailDebugSummary.textContent = r.debugReport.summary || "";
-          detailDebugList.innerHTML = "";
-          (r.debugReport.findings || []).forEach((f) => {
-            const li = document.createElement("li");
-            li.textContent = f;
-            detailDebugList.appendChild(li);
-          });
-          debugWrap.classList.remove("hidden");
-        } else {
-          debugWrap.classList.add("hidden");
-        }
-
-        detailModal.classList.remove("hidden");
-      });
+      div.querySelector(".open-detail-btn").addEventListener("click", () => openDetailForRecipe(r));
 
       const editBtn = div.querySelector(".edit-btn");
       if (editBtn) {
-        editBtn.addEventListener("click", () => {
-          if (!canEditRecipes()) return;
-          clearRecipeForm(false);
-          setEditorMode(true, r);
-          newRecipeCard.classList.remove("hidden");
-          setupCard.classList.add("hidden");
-          recipeMsg.classList.add("hidden");
-          updateNavActiveState();
-          newRecipeCard.scrollIntoView({ behavior: "smooth", block: "start" });
-        });
+        editBtn.addEventListener("click", () => openRecipeForEditing(r));
       }
 
       const delBtn = div.querySelector(".del-btn");
@@ -2925,19 +3394,72 @@
 
       const publishedAll = allRecipes.filter((r) => !isDraftRecipe(r));
       const draftsAll = allRecipes.filter((r) => isDraftRecipe(r));
+      const recipesWithCourse = publishedAll.filter((r) => r.course && String(r.course).trim());
 
       sidebarCount.textContent = publishedAll.length;
+      coursesCount.textContent = recipesWithCourse.length;
       draftsCount.textContent = draftsAll.length;
 
       const isDraftsMode = activeListView === "drafts" && canEditRecipes();
-      const baseList = isDraftsMode ? draftsAll : publishedAll;
+      const isCoursesMode = activeListView === "courses";
+
+      const baseList = isDraftsMode
+        ? draftsAll
+        : (isCoursesMode ? recipesWithCourse : publishedAll);
 
       const filtered = baseList.filter((r) => {
         const matchCat = cat === "ALL" || r.category === cat;
-        const hay = `${r.title || ""} ${r.origin || ""} ${r.ingredients || ""} ${r.steps || ""}`.toLowerCase();
+        const hay = `${r.title || ""} ${r.course || ""} ${r.origin || ""} ${r.ingredients || ""} ${r.steps || ""}`.toLowerCase();
         const matchTerm = !term || hay.includes(term);
         return matchCat && matchTerm;
       });
+
+      recipesList.innerHTML = "";
+
+      if (isCoursesMode) {
+        archiveSectionTitle.innerHTML = `Corsi di cucina (<span>${filtered.length}</span>)`;
+        archiveSectionSubtitle.textContent = "Ricette raggruppate per corso: ogni ricetta mantiene anche la propria categoria (Antipasti, Primi, Dolci, ecc.).";
+
+        if (filtered.length === 0) {
+          recipesList.innerHTML = `<p style='color: var(--muted);'>Nessuna ricetta assegnata a un corso. Puoi assegnare un corso quando crei o modifichi una ricetta.</p>`;
+          return;
+        }
+
+        const courseNames = [];
+        filtered.forEach((r) => {
+          const cName = String(r.course || "").trim();
+          if (cName && !courseNames.includes(cName)) courseNames.push(cName);
+        });
+
+        courseNames.forEach((cName) => {
+          const itemsInCourse = filtered.filter((r) => String(r.course || "").trim() === cName);
+          if (itemsInCourse.length === 0) return;
+
+          const sectionBox = document.createElement("div");
+          sectionBox.className = "category-container is-course-group";
+
+          const headerDiv = document.createElement("div");
+          headerDiv.className = "category-header";
+          headerDiv.innerHTML = `
+            <div class="category-title-wrap">
+              ${getCourseIconSvg("course-icon")}
+              <h3 class="category-title">${escapeHtml(cName)}</h3>
+            </div>
+            <span class="count-pill course-pill">${itemsInCourse.length}</span>
+          `;
+
+          const gridDiv = document.createElement("div");
+          gridDiv.className = "recipes-grid";
+          itemsInCourse.forEach((r) => {
+            gridDiv.appendChild(createRecipeCardElement(r, false));
+          });
+
+          sectionBox.appendChild(headerDiv);
+          sectionBox.appendChild(gridDiv);
+          recipesList.appendChild(sectionBox);
+        });
+        return;
+      }
 
       if (isDraftsMode) {
         archiveSectionTitle.innerHTML = `Ricette da controllare e strutturare (<span>${filtered.length}</span>)`;
@@ -2962,8 +3484,6 @@
           orderedCategories.push(cName);
         }
       });
-
-      recipesList.innerHTML = "";
 
       orderedCategories.forEach((catName) => {
         if (cat !== "ALL" && cat !== catName) return;
