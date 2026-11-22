@@ -43,9 +43,10 @@
 
     body {
       margin: 0;
-      font-family: var(--font-ui);
+      font-family: var(--font-hand);
+      font-size: 18px;
       color: var(--ink);
-      line-height: 1.5;
+      line-height: 1.45;
       min-height: 100vh;
       background: var(--bg-fallback) url("sfondo-cucina.jpg") no-repeat center center fixed;
       background-size: cover;
@@ -79,24 +80,25 @@
 
     .app-shell {
       display: grid;
-      grid-template-columns: 275px minmax(0, 1fr);
+      grid-template-columns: 280px minmax(0, 1fr);
       gap: 32px;
       align-items: start;
       min-height: calc(100vh - 52px);
     }
 
+    /* MENU LATERALE MINIMAL IN STILE MANOSCRITTO */
     .sidebar {
       position: sticky;
       top: 26px;
       display: flex;
       flex-direction: column;
-      gap: 22px;
+      gap: 20px;
       padding: 8px 16px 8px 0;
     }
 
     .brand-box h1 {
       font-family: var(--font-script);
-      font-size: 46px;
+      font-size: 50px;
       font-weight: 400;
       margin: 0 0 6px 0;
       line-height: 0.98;
@@ -107,7 +109,8 @@
       display: flex;
       flex-direction: column;
       gap: 5px;
-      font-size: 13px;
+      font-family: var(--font-hand);
+      font-size: 17px;
       color: var(--muted);
     }
 
@@ -126,8 +129,9 @@
       color: var(--ink);
       text-align: left;
       padding: 9px 12px;
-      font-size: 15px;
-      font-weight: 500;
+      font-family: var(--font-hand);
+      font-size: 21px;
+      font-weight: 400;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -151,11 +155,12 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 24px;
-      height: 24px;
-      padding: 0 7px;
+      min-width: 26px;
+      height: 26px;
+      padding: 0 8px;
       border-radius: 999px;
-      font-size: 12px;
+      font-family: var(--font-hand);
+      font-size: 16px;
       font-weight: 700;
       background: rgba(255, 255, 255, 0.72);
       color: var(--ink);
@@ -170,8 +175,8 @@
     }
 
     .sidebar-footer {
-      margin-top: 16px;
-      padding-top: 14px;
+      margin-top: 14px;
+      padding-top: 12px;
     }
 
     .logout-minimal {
@@ -180,9 +185,10 @@
       color: var(--ink);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
-      padding: 9px 14px;
-      font-size: 14px;
-      font-weight: 500;
+      padding: 8px 14px;
+      font-family: var(--font-hand);
+      font-size: 19px;
+      font-weight: 400;
     }
 
     .logout-minimal:hover {
@@ -196,6 +202,7 @@
       min-width: 0;
     }
 
+    /* BARRA RICERCA FLUTTUANTE PULITA */
     .search-bar-row {
       display: grid;
       grid-template-columns: minmax(0, 1.5fr) minmax(200px, 0.8fr);
@@ -207,8 +214,10 @@
       background: var(--glass-strong);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
-      padding: 12px 15px;
+      padding: 11px 15px;
       box-shadow: 0 3px 12px rgba(36, 33, 30, 0.06);
+      font-family: var(--font-hand);
+      font-size: 19px;
     }
 
     .panel-glass {
@@ -220,34 +229,83 @@
     }
 
     .archive-section {
-      padding-top: 4px;
+      padding-top: 2px;
     }
 
     .archive-heading {
-      font-size: 22px;
+      font-family: var(--font-hand);
+      font-size: 30px;
       font-weight: 700;
-      margin: 0 0 6px 0;
+      margin: 0 0 4px 0;
       color: var(--ink);
     }
 
     .archive-sub {
-      font-size: 14px;
+      font-family: var(--font-hand);
+      font-size: 18px;
       color: var(--muted);
-      margin: 0 0 18px 0;
+      margin: 0 0 20px 0;
     }
 
+    /* CONTENITORI PER CATEGORIA */
+    .categories-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    .category-container {
+      padding: 18px 20px;
+      border-radius: var(--radius-lg);
+      background: rgba(253, 250, 245, 0.62);
+      backdrop-filter: blur(5px);
+      border: 1px solid rgba(110, 98, 84, 0.18);
+    }
+
+    .category-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+      border-bottom: 1px dashed rgba(110, 98, 84, 0.28);
+    }
+
+    .category-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .category-icon {
+      width: 28px;
+      height: 28px;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .category-title {
+      font-family: var(--font-script);
+      font-size: 38px;
+      font-weight: 400;
+      line-height: 1;
+      margin: 0;
+      color: var(--ink);
+    }
+
+    /* GRIGLIA RICETTE ALL'INTERNO DEL CONTENITORE CATEGORIA */
     .recipes-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 24px 28px;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 18px 22px;
     }
 
     .recipe-item {
       padding: 14px 16px;
       border-radius: var(--radius-md);
-      background: rgba(255, 253, 249, 0.56);
-      backdrop-filter: blur(4px);
-      border: 1px solid rgba(110, 98, 84, 0.14);
+      background: rgba(255, 253, 249, 0.72);
+      border: 1px solid rgba(110, 98, 84, 0.16);
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -257,25 +315,41 @@
 
     .recipe-item.is-draft {
       border-left: 4px solid var(--draft-accent);
-      background: rgba(255, 249, 236, 0.72);
+      background: rgba(255, 249, 236, 0.82);
     }
 
     .recipe-item:hover {
-      background: rgba(255, 253, 249, 0.88);
+      background: rgba(255, 253, 249, 0.95);
       transform: translateY(-2px);
+    }
+
+    .recipe-card-title-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
     }
 
     .recipe-card-title {
       font-family: var(--font-script);
-      font-size: 38px;
+      font-size: 36px;
       font-weight: 400;
       line-height: 1.02;
       color: var(--ink);
       display: block;
     }
 
+    .recipe-type-icon {
+      width: 24px;
+      height: 24px;
+      color: var(--muted);
+      flex-shrink: 0;
+      margin-top: 6px;
+    }
+
     .recipe-meta {
-      font-size: 13px;
+      font-family: var(--font-hand);
+      font-size: 16px;
       color: var(--muted);
       margin-top: 4px;
     }
@@ -285,7 +359,8 @@
       margin-top: 6px;
       padding: 2px 8px;
       border-radius: 6px;
-      font-size: 11px;
+      font-family: var(--font-hand);
+      font-size: 14px;
       font-weight: 700;
       background: var(--draft-soft);
       color: #8a5308;
@@ -300,13 +375,14 @@
     }
 
     .pill-btn {
-      background: rgba(255, 255, 255, 0.85);
+      background: rgba(255, 255, 255, 0.88);
       color: var(--ink);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 6px 13px;
-      font-size: 13px;
-      font-weight: 500;
+      padding: 5px 12px;
+      font-family: var(--font-hand);
+      font-size: 17px;
+      font-weight: 400;
     }
 
     .pill-btn:hover {
@@ -332,8 +408,8 @@
     }
 
     h1, h2, h3 { margin-top: 0; }
-    h2 { font-size: 19px; }
-    h3 { font-size: 15px; margin-bottom: 8px; }
+    h2 { font-family: var(--font-hand); font-size: 24px; }
+    h3 { font-family: var(--font-hand); font-size: 20px; margin-bottom: 8px; }
 
     .topbar {
       display: flex;
@@ -347,9 +423,10 @@
       display: inline-block;
       padding: 2px 9px;
       border-radius: 999px;
-      font-size: 11px;
+      font-family: var(--font-hand);
+      font-size: 14px;
       font-weight: 700;
-      letter-spacing: 0.03em;
+      letter-spacing: 0.02em;
       background: rgba(255, 255, 255, 0.72);
       color: var(--accent);
       border: 1px solid var(--border);
@@ -357,10 +434,11 @@
     }
 
     input, select, textarea, button {
-      font: inherit;
+      font-family: var(--font-hand);
+      font-size: 18px;
       border-radius: var(--radius-sm);
       border: 1px solid var(--border);
-      padding: 10px 12px;
+      padding: 9px 12px;
     }
 
     input, select, textarea {
@@ -382,7 +460,7 @@
       background: var(--accent);
       color: #fff;
       border: none;
-      font-weight: 600;
+      font-weight: 700;
       transition: background 0.15s, opacity 0.15s;
     }
 
@@ -393,6 +471,7 @@
       background: rgba(255, 255, 255, 0.85);
       color: var(--ink);
       border: 1px solid var(--border);
+      font-weight: 400;
     }
 
     button.secondary:hover:not(:disabled) { background: #fff; }
@@ -409,15 +488,15 @@
 
     button.danger {
       background: #b8292f;
-      padding: 7px 11px;
-      font-size: 13px;
+      padding: 6px 11px;
+      font-size: 16px;
     }
 
     button.danger:hover:not(:disabled) { background: #941e23; }
 
     button.small {
-      padding: 7px 11px;
-      font-size: 13px;
+      padding: 6px 11px;
+      font-size: 16px;
     }
 
     .stack { display: flex; flex-direction: column; gap: 12px; }
@@ -438,7 +517,7 @@
       border-radius: var(--radius-md);
       background: var(--warn-bg);
       border: 1px solid var(--warn-border);
-      font-size: 14px;
+      font-size: 17px;
       margin-top: 10px;
       white-space: pre-wrap;
     }
@@ -666,8 +745,9 @@
     }
 
     label {
-      font-size: 13px;
-      font-weight: 600;
+      font-family: var(--font-hand);
+      font-size: 17px;
+      font-weight: 700;
       color: var(--muted);
       display: block;
       margin-bottom: 4px;
@@ -697,7 +777,7 @@
 <body>
   <div class="container">
     <div id="login-view" class="login-wrap">
-      <h1 style="font-family: var(--font-script); font-size: 48px; font-weight: 400; color: var(--ink); margin-bottom: 4px;">Le ricette di Luigina</h1>
+      <h1 style="font-family: var(--font-script); font-size: 52px; font-weight: 400; color: var(--ink); margin-bottom: 4px;">Le ricette di Luigina</h1>
       <p style="color: var(--muted);">Accedi per consultare o aggiornare l'archivio di famiglia.</p>
 
       <form id="email-login-form" class="stack">
@@ -758,7 +838,7 @@
             <h2 style="margin: 0;">Pannello Setup (Admin)</h2>
             <button type="button" id="close-setup-btn" class="secondary small">Chiudi</button>
           </div>
-          <p style="color: var(--muted); font-size: 14px;">
+          <p style="color: var(--muted); font-size: 17px;">
             Personalizza le categorie dell'archivio, il modello Gemini e le regole di catalogazione AI. Le modifiche si applicano subito a tutti gli utenti.
           </p>
 
@@ -803,7 +883,7 @@
               </select>
             </div>
           </div>
-          <div style="font-size: 12px; color: var(--muted); margin-top: 6px;">
+          <div style="font-size: 16px; color: var(--muted); margin-top: 6px;">
             Nota: se il modello scelto risulta temporaneamente sovraccarico (503), l'app ritenta automaticamente alternando tra i modelli disponibili.
           </div>
 
@@ -817,7 +897,7 @@
           <div class="topbar" style="margin-bottom: 12px;">
             <div>
               <h2 id="editor-heading" style="margin: 0;">Nuova ricetta</h2>
-              <div id="editing-indicator" class="recipe-meta hidden" style="color: var(--accent); font-weight: 600;"></div>
+              <div id="editing-indicator" class="recipe-meta hidden" style="color: var(--accent); font-weight: 700;"></div>
             </div>
             <button type="button" id="cancel-new-btn" class="secondary small">Chiudi</button>
           </div>
@@ -836,7 +916,7 @@
                   Scatta o scegli uno o più fogli (anche fronte/retro o più pagine per la stessa ricetta), oppure trascina qui i file da PC:
                 </label>
                 <input type="file" id="recipe-photo-input" accept="image/*" multiple />
-                <div style="font-size: 12px; color: var(--muted);">
+                <div style="font-size: 16px; color: var(--muted);">
                   Suggerimento: puoi selezionare più immagini insieme oppure trascinarle qui con il mouse. Se l'AI è occupata su smartphone, puoi salvare subito la foto in "Da controllare / strutturare" e analizzarla poi da PC.
                 </div>
                 <div id="photo-preview-list" class="photo-grid"></div>
@@ -853,7 +933,7 @@
                 <button type="button" id="start-rec-btn" class="secondary">Registra voce</button>
                 <button type="button" id="stop-rec-btn" class="secondary" disabled>Ferma registrazione</button>
               </div>
-              <div id="rec-timer" style="font-size: 13px; color: var(--muted);"></div>
+              <div id="rec-timer" style="font-size: 17px; color: var(--muted);"></div>
               <input type="file" id="recipe-audio-input" accept="audio/*" />
               <audio id="audio-preview" class="preview-media hidden" controls></audio>
               <div>
@@ -884,7 +964,7 @@
             <div class="topbar">
               <div>
                 <strong>Foto originale allegata a questa bozza</strong>
-                <div style="font-size: 13px; color: var(--muted);">Puoi avviare ora l'estrazione AI direttamente da questa foto salvata.</div>
+                <div style="font-size: 17px; color: var(--muted);">Puoi avviare ora l'estrazione AI direttamente da questa foto salvata.</div>
               </div>
               <button type="button" id="analyze-saved-photo-btn">Analizza foto salvata con AI</button>
             </div>
@@ -947,12 +1027,12 @@
                 <div>
                   <button type="button" id="refine-ai-btn" class="secondary small">Aggiorna con AI</button>
                 </div>
-                <div id="refine-reply-text" style="font-size: 13px; color: var(--muted);"></div>
+                <div id="refine-reply-text" style="font-size: 17px; color: var(--muted);"></div>
               </div>
 
               <div id="debug-prompt-box" class="debug-prompt-box">
                 <strong>Controllo / Debug ricetta (facoltativo):</strong>
-                <div style="font-size: 13px; margin: 6px 0 10px 0;">
+                <div style="font-size: 17px; margin: 6px 0 10px 0;">
                   Vuoi che l'AI analizzi la ricetta — anche in un secondo momento modificandola — per segnalare dosi strane, passaggi mancanti o suggerimenti?
                 </div>
                 <div class="row">
@@ -963,7 +1043,7 @@
 
               <div id="debug-result-box" class="debug-box hidden">
                 <strong>Esito controllo / debug ricetta:</strong>
-                <div id="debug-summary" style="margin-top: 6px; font-size: 14px;"></div>
+                <div id="debug-summary" style="margin-top: 6px; font-size: 17px;"></div>
                 <ul id="debug-findings-list"></ul>
               </div>
             </div>
@@ -973,8 +1053,8 @@
 
         <section class="archive-section">
           <h2 id="archive-section-title" class="archive-heading">Archivio ricette (<span id="recipes-count">0</span>)</h2>
-          <p id="archive-section-subtitle" class="archive-sub">Ricette verificate e pronte da consultare.</p>
-          <div id="recipes-list" class="recipes-grid">Caricamento...</div>
+          <p id="archive-section-subtitle" class="archive-sub">Ricette suddivise per categoria, pronte da consultare.</p>
+          <div id="recipes-list" class="categories-stack">Caricamento...</div>
         </section>
       </main>
     </div>
@@ -1001,12 +1081,12 @@
 
       <div id="detail-debug-wrap" class="debug-box hidden" style="margin-top: 12px;">
         <strong>Note da controllo / debug:</strong>
-        <div id="detail-debug-summary" style="margin-top: 4px; font-size: 14px;"></div>
+        <div id="detail-debug-summary" style="margin-top: 4px; font-size: 17px;"></div>
         <ul id="detail-debug-list"></ul>
       </div>
 
       <div class="sheet-footer">
-        <span id="detail-origin-caption" style="font-size: 13px; color: var(--muted);"></span>
+        <span id="detail-origin-caption" style="font-size: 17px; color: var(--muted);"></span>
         <button type="button" id="open-source-photo-btn" class="secondary small hidden">
           Origine dati (foto originale)
         </button>
@@ -1019,7 +1099,7 @@
       <strong id="lightbox-title">Foto originale</strong>
       <div style="display: flex; gap: 8px; align-items: center;">
         <button type="button" id="zoom-out-btn" class="secondary small">Zoom -</button>
-        <span id="zoom-label" style="font-size: 13px; min-width: 44px; text-align: center;">100%</span>
+        <span id="zoom-label" style="font-size: 17px; min-width: 52px; text-align: center;">100%</span>
         <button type="button" id="zoom-in-btn" class="secondary small">Zoom +</button>
         <button type="button" id="close-lightbox-btn" class="small">Chiudi foto</button>
       </div>
@@ -1092,6 +1172,31 @@
       "Usa 'Conserve' per marmellate, confetture, sottaceti, sott'oli e sughi da vasetto. " +
       "Usa 'Lievitati' per pane, pizza, focacce, cantucci/biscotti lievitati e brioche. " +
       "Distingui chiaramente testo stampato/a PC da scrittura a mano; se ci sono parole o finali di frase scritti a mano poco chiari, sbiaditi o troncati, segnalali in 'uncertainties'.";
+
+    function getCategoryIconSvg(categoryName = "", cssClass = "category-icon") {
+      const key = String(categoryName).toLowerCase();
+      let paths = "";
+
+      if (key.includes("antipast")) {
+        paths = `<circle cx="12" cy="12" r="7"/><circle cx="10" cy="10" r="1.4"/><circle cx="14.2" cy="10.5" r="1.4"/><circle cx="12" cy="14.5" r="1.5"/>`;
+      } else if (key.includes("prim")) {
+        paths = `<path d="M4 12h16a8 8 0 0 1-16 0Z"/><path d="M8 7c0-1.5 1.5-2 1.5-3.5"/><path d="M12.5 7c0-1.5 1.5-2 1.5-3.5"/>`;
+      } else if (key.includes("second")) {
+        paths = `<path d="M6 16c0-4 3-7 7-7 2.8 0 5 1.5 5 3.5 0 2-1.8 3.5-4 3.5H6Z"/><circle cx="18.5" cy="13.5" r="2"/>`;
+      } else if (key.includes("contorn")) {
+        paths = `<path d="M12 20v-7"/><path d="M12 13C8 13 5 10.5 5 7c3.5 0 7 2.5 7 6Z"/><path d="M12 13c0-3.5 3.5-6 7-6 0 3.5-3 6-7 6Z"/>`;
+      } else if (key.includes("lievit")) {
+        paths = `<path d="M4 15c0-3.5 3.5-6 8-6s8 2.5 8 6v3H4v-3Z"/><path d="M8 12v6"/><path d="M12 11v7"/><path d="M16 12v6"/>`;
+      } else if (key.includes("dolc")) {
+        paths = `<path d="M4 15h16v3H4v-3Z"/><path d="M6 15l2-5 4 2 4-2 2 5"/><path d="M12 5v2"/>`;
+      } else if (key.includes("conserv")) {
+        paths = `<rect x="7" y="7" width="10" height="12" rx="2.5"/><path d="M8 7V5h8v2"/><path d="M7 13h10"/>`;
+      } else {
+        paths = `<path d="M12 5v14"/><path d="M5 12h14"/><circle cx="12" cy="12" r="8"/>`;
+      }
+
+      return `<svg class="${cssClass}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
+    }
 
     let currentRole = null;
     let activeListView = "archive";
@@ -1387,6 +1492,7 @@
           aiRules = DEFAULT_AI_RULES;
         }
         syncCategoryDropdowns();
+        renderRecipes();
       });
     }
 
@@ -1446,7 +1552,10 @@
         const row = document.createElement("div");
         row.className = "cat-chip-row";
         row.innerHTML = `
-          <strong>${escapeHtml(cat)}</strong>
+          <div style="display:flex; align-items:center; gap:8px;">
+            ${getCategoryIconSvg(cat, "category-icon")}
+            <strong>${escapeHtml(cat)}</strong>
+          </div>
           <div style="display: flex; gap: 6px;">
             <button type="button" class="secondary small up-btn" ${idx === 0 ? "disabled" : ""}>↑</button>
             <button type="button" class="secondary small down-btn" ${idx === draftCategories.length - 1 ? "disabled" : ""}>↓</button>
@@ -1681,7 +1790,7 @@
         wrap.className = "photo-thumb-wrap";
         wrap.innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:4px;">
-            <span style="font-size:12px; font-weight:600; color:var(--muted);">Foglio ${idx + 1}</span>
+            <span style="font-size:14px; font-weight:700; color:var(--muted);">Foglio ${idx + 1}</span>
             <button type="button" class="danger small remove-photo-btn">✕</button>
           </div>
           <img src="${dataUrl}" class="preview-img" alt="Foglio ${idx + 1}" />
@@ -2491,6 +2600,102 @@
       });
     }
 
+    function createRecipeCardElement(r, draft) {
+      const div = document.createElement("div");
+      div.className = `recipe-item${draft ? " is-draft" : ""}`;
+
+      const metaText = [r.category, r.origin].filter(Boolean).join(" • ");
+      const hasDebugBadge = r.debugReport && r.debugReport.summary ? " • Debug salvato" : "";
+
+      div.innerHTML = `
+        <div>
+          <div class="recipe-card-title-row">
+            <span class="recipe-card-title">${escapeHtml(r.title || "Senza titolo")}</span>
+            ${getCategoryIconSvg(r.category, "recipe-type-icon")}
+          </div>
+          <div class="recipe-meta">${escapeHtml(metaText + hasDebugBadge)}</div>
+          ${draft ? `<span class="draft-tag">DA STRUTTURARE</span>` : ""}
+        </div>
+        <div class="pill-actions">
+          <button type="button" class="pill-btn open-detail-btn">Apri</button>
+          ${canEditRecipes() ? `<button type="button" class="pill-btn${draft ? " primary-pill" : ""} edit-btn">${draft ? "Struttura / Modifica" : "Modifica"}</button>` : ""}
+          ${currentRole === "admin" ? `<button type="button" class="pill-btn danger-ghost del-btn">Elimina</button>` : ""}
+        </div>
+      `;
+
+      div.querySelector(".open-detail-btn").addEventListener("click", () => {
+        document.getElementById("detail-title").textContent = r.title || "Senza titolo";
+        document.getElementById("detail-meta").textContent = [r.category, draft ? "Bozza da strutturare" : ""].filter(Boolean).join(" • ");
+        document.getElementById("detail-ingredients").textContent = r.ingredients || "";
+        document.getElementById("detail-steps").textContent = r.steps || "";
+
+        activeDetailPhotoUrl = r.photoDataUrl || null;
+        detailOriginCaption.textContent = r.origin ? `Fonte: ${r.origin}` : "Fonte originale";
+        if (activeDetailPhotoUrl) {
+          openSourcePhotoBtn.classList.remove("hidden");
+        } else {
+          openSourcePhotoBtn.classList.add("hidden");
+        }
+
+        const doubtsWrap = document.getElementById("detail-doubts-wrap");
+        const doubtsList = document.getElementById("detail-doubts-list");
+        if (Array.isArray(r.uncertainties) && r.uncertainties.length > 0) {
+          doubtsList.innerHTML = "";
+          r.uncertainties.forEach((u) => {
+            const li = document.createElement("li");
+            li.textContent = u;
+            doubtsList.appendChild(li);
+          });
+          doubtsWrap.classList.remove("hidden");
+        } else {
+          doubtsWrap.classList.add("hidden");
+        }
+
+        const debugWrap = document.getElementById("detail-debug-wrap");
+        const detailDebugSummary = document.getElementById("detail-debug-summary");
+        const detailDebugList = document.getElementById("detail-debug-list");
+        if (r.debugReport && (r.debugReport.summary || (r.debugReport.findings && r.debugReport.findings.length > 0))) {
+          detailDebugSummary.textContent = r.debugReport.summary || "";
+          detailDebugList.innerHTML = "";
+          (r.debugReport.findings || []).forEach((f) => {
+            const li = document.createElement("li");
+            li.textContent = f;
+            detailDebugList.appendChild(li);
+          });
+          debugWrap.classList.remove("hidden");
+        } else {
+          debugWrap.classList.add("hidden");
+        }
+
+        detailModal.classList.remove("hidden");
+      });
+
+      const editBtn = div.querySelector(".edit-btn");
+      if (editBtn) {
+        editBtn.addEventListener("click", () => {
+          if (!canEditRecipes()) return;
+          clearRecipeForm(false);
+          setEditorMode(true, r);
+          newRecipeCard.classList.remove("hidden");
+          setupCard.classList.add("hidden");
+          recipeMsg.classList.add("hidden");
+          updateNavActiveState();
+          newRecipeCard.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      }
+
+      const delBtn = div.querySelector(".del-btn");
+      if (delBtn) {
+        delBtn.addEventListener("click", async () => {
+          if (confirm(`Vuoi davvero eliminare "${r.title}"?`)) {
+            await deleteDoc(doc(db, "recipes", r.id));
+          }
+        });
+      }
+
+      return div;
+    }
+
     function renderRecipes() {
       const term = searchInput.value.trim().toLowerCase();
       const cat = categoryFilter.value;
@@ -2501,9 +2706,8 @@
       sidebarCount.textContent = publishedAll.length;
       draftsCount.textContent = draftsAll.length;
 
-      const baseList = activeListView === "drafts" && canEditRecipes()
-        ? draftsAll
-        : publishedAll;
+      const isDraftsMode = activeListView === "drafts" && canEditRecipes();
+      const baseList = isDraftsMode ? draftsAll : publishedAll;
 
       const filtered = baseList.filter((r) => {
         const matchCat = cat === "ALL" || r.category === cat;
@@ -2512,114 +2716,60 @@
         return matchCat && matchTerm;
       });
 
-      if (activeListView === "drafts" && canEditRecipes()) {
+      if (isDraftsMode) {
         archiveSectionTitle.innerHTML = `Ricette da controllare e strutturare (<span>${filtered.length}</span>)`;
-        archiveSectionSubtitle.textContent = "Bozze scansionate o annotate al volo: clicca su 'Struttura / Modifica' per farle elaborare dall'AI e renderle definitive.";
+        archiveSectionSubtitle.textContent = "Bozze scansionate o annotate al volo: raggruppate per categoria per completarle con calma.";
       } else {
         archiveSectionTitle.innerHTML = `Archivio ricette (<span>${filtered.length}</span>)`;
-        archiveSectionSubtitle.textContent = "Ricette verificate e pronte da consultare.";
+        archiveSectionSubtitle.textContent = "Ricette suddivise per categoria, pronte da consultare.";
       }
 
       if (filtered.length === 0) {
-        recipesList.innerHTML = activeListView === "drafts"
+        recipesList.innerHTML = isDraftsMode
           ? "<p style='color: var(--muted);'>Nessuna ricetta in attesa di controllo o strutturazione.</p>"
           : "<p style='color: var(--muted);'>Nessuna ricetta trovata.</p>";
         return;
       }
 
-      recipesList.innerHTML = "";
+      const fallbackCat = categories[categories.length - 1] || "Altro";
+      const orderedCategories = [...categories];
       filtered.forEach((r) => {
-        const draft = isDraftRecipe(r);
-        const div = document.createElement("div");
-        div.className = `recipe-item${draft ? " is-draft" : ""}`;
+        const cName = r.category || fallbackCat;
+        if (!orderedCategories.includes(cName)) {
+          orderedCategories.push(cName);
+        }
+      });
 
-        const metaText = [r.category, r.origin].filter(Boolean).join(" • ");
-        const hasDebugBadge = r.debugReport && r.debugReport.summary ? " • Debug salvato" : "";
+      recipesList.innerHTML = "";
 
-        div.innerHTML = `
-          <div>
-            <span class="recipe-card-title">${escapeHtml(r.title || "Senza titolo")}</span>
-            <div class="recipe-meta">${escapeHtml(metaText + hasDebugBadge)}</div>
-            ${draft ? `<span class="draft-tag">DA STRUTTURARE</span>` : ""}
+      orderedCategories.forEach((catName) => {
+        if (cat !== "ALL" && cat !== catName) return;
+        const itemsInCat = filtered.filter((r) => (r.category || fallbackCat) === catName);
+        if (itemsInCat.length === 0) return;
+
+        const sectionBox = document.createElement("div");
+        sectionBox.className = "category-container";
+
+        const headerDiv = document.createElement("div");
+        headerDiv.className = "category-header";
+        headerDiv.innerHTML = `
+          <div class="category-title-wrap">
+            ${getCategoryIconSvg(catName, "category-icon")}
+            <h3 class="category-title">${escapeHtml(catName)}</h3>
           </div>
-          <div class="pill-actions">
-            <button type="button" class="pill-btn open-detail-btn">Apri</button>
-            ${canEditRecipes() ? `<button type="button" class="pill-btn${draft ? " primary-pill" : ""} edit-btn">${draft ? "Struttura / Modifica" : "Modifica"}</button>` : ""}
-            ${currentRole === "admin" ? `<button type="button" class="pill-btn danger-ghost del-btn">Elimina</button>` : ""}
-          </div>
+          <span class="count-pill">${itemsInCat.length}</span>
         `;
 
-        div.querySelector(".open-detail-btn").addEventListener("click", () => {
-          document.getElementById("detail-title").textContent = r.title || "Senza titolo";
-          document.getElementById("detail-meta").textContent = [r.category, draft ? "Bozza da strutturare" : ""].filter(Boolean).join(" • ");
-          document.getElementById("detail-ingredients").textContent = r.ingredients || "";
-          document.getElementById("detail-steps").textContent = r.steps || "";
+        const gridDiv = document.createElement("div");
+        gridDiv.className = "recipes-grid";
 
-          activeDetailPhotoUrl = r.photoDataUrl || null;
-          detailOriginCaption.textContent = r.origin ? `Fonte: ${r.origin}` : "Fonte originale";
-          if (activeDetailPhotoUrl) {
-            openSourcePhotoBtn.classList.remove("hidden");
-          } else {
-            openSourcePhotoBtn.classList.add("hidden");
-          }
-
-          const doubtsWrap = document.getElementById("detail-doubts-wrap");
-          const doubtsList = document.getElementById("detail-doubts-list");
-          if (Array.isArray(r.uncertainties) && r.uncertainties.length > 0) {
-            doubtsList.innerHTML = "";
-            r.uncertainties.forEach((u) => {
-              const li = document.createElement("li");
-              li.textContent = u;
-              doubtsList.appendChild(li);
-            });
-            doubtsWrap.classList.remove("hidden");
-          } else {
-            doubtsWrap.classList.add("hidden");
-          }
-
-          const debugWrap = document.getElementById("detail-debug-wrap");
-          const detailDebugSummary = document.getElementById("detail-debug-summary");
-          const detailDebugList = document.getElementById("detail-debug-list");
-          if (r.debugReport && (r.debugReport.summary || (r.debugReport.findings && r.debugReport.findings.length > 0))) {
-            detailDebugSummary.textContent = r.debugReport.summary || "";
-            detailDebugList.innerHTML = "";
-            (r.debugReport.findings || []).forEach((f) => {
-              const li = document.createElement("li");
-              li.textContent = f;
-              detailDebugList.appendChild(li);
-            });
-            debugWrap.classList.remove("hidden");
-          } else {
-            debugWrap.classList.add("hidden");
-          }
-
-          detailModal.classList.remove("hidden");
+        itemsInCat.forEach((r) => {
+          gridDiv.appendChild(createRecipeCardElement(r, isDraftRecipe(r)));
         });
 
-        const editBtn = div.querySelector(".edit-btn");
-        if (editBtn) {
-          editBtn.addEventListener("click", () => {
-            if (!canEditRecipes()) return;
-            clearRecipeForm(false);
-            setEditorMode(true, r);
-            newRecipeCard.classList.remove("hidden");
-            setupCard.classList.add("hidden");
-            recipeMsg.classList.add("hidden");
-            updateNavActiveState();
-            newRecipeCard.scrollIntoView({ behavior: "smooth", block: "start" });
-          });
-        }
-
-        const delBtn = div.querySelector(".del-btn");
-        if (delBtn) {
-          delBtn.addEventListener("click", async () => {
-            if (confirm(`Vuoi davvero eliminare "${r.title}"?`)) {
-              await deleteDoc(doc(db, "recipes", r.id));
-            }
-          });
-        }
-
-        recipesList.appendChild(div);
+        sectionBox.appendChild(headerDiv);
+        sectionBox.appendChild(gridDiv);
+        recipesList.appendChild(sectionBox);
       });
     }
 
