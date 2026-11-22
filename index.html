@@ -25,6 +25,8 @@
       --draft-soft: rgba(223, 160, 54, 0.16);
       --course-accent: #2f5e4e;
       --course-soft: rgba(47, 94, 78, 0.13);
+      --lit-accent: #3d5278;
+      --lit-soft: rgba(61, 82, 120, 0.13);
       --border: rgba(110, 98, 84, 0.22);
       --warn-bg: #fff5df;
       --warn-border: #dfa036;
@@ -268,8 +270,29 @@
     }
 
     .category-container.is-course-group {
-      background: rgba(246, 251, 249, 0.68);
-      border-color: rgba(47, 94, 78, 0.24);
+      background: rgba(246, 251, 249, 0.72);
+      border-color: rgba(47, 94, 78, 0.26);
+    }
+
+    .course-subblock {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px dashed rgba(47, 94, 78, 0.25);
+    }
+
+    .course-subblock-title {
+      font-family: var(--font-hand);
+      font-size: 21px;
+      font-weight: 700;
+      color: var(--course-accent);
+      margin: 0 0 12px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .course-subblock-title.literature-title {
+      color: var(--lit-accent);
     }
 
     .category-header {
@@ -278,7 +301,7 @@
       justify-content: space-between;
       gap: 12px;
       padding-bottom: 12px;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
       border-bottom: 1px dashed rgba(110, 98, 84, 0.28);
     }
 
@@ -296,8 +319,8 @@
     }
 
     .course-icon {
-      width: 28px;
-      height: 28px;
+      width: 30px;
+      height: 30px;
       color: var(--course-accent);
       flex-shrink: 0;
     }
@@ -306,7 +329,7 @@
       font-family: var(--font-script);
       font-size: 38px;
       font-weight: 400;
-      line-height: 1;
+      line-height: 1.05;
       margin: 0;
       color: var(--ink);
     }
@@ -332,6 +355,11 @@
     .recipe-item.is-draft {
       border-left: 4px solid var(--draft-accent);
       background: rgba(255, 249, 236, 0.82);
+    }
+
+    .recipe-item.is-literature {
+      border-left: 4px solid var(--lit-accent);
+      background: rgba(244, 248, 255, 0.82);
     }
 
     .recipe-item:hover {
@@ -399,6 +427,18 @@
       background: var(--course-soft);
       color: var(--course-accent);
       border: 1px solid rgba(47, 94, 78, 0.35);
+    }
+
+    .lit-tag {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 6px;
+      font-family: var(--font-hand);
+      font-size: 15px;
+      font-weight: 700;
+      background: var(--lit-soft);
+      color: var(--lit-accent);
+      border: 1px solid rgba(61, 82, 120, 0.35);
     }
 
     .dup-pair-card {
@@ -919,7 +959,6 @@
           </button>
         </div>
 
-        <!-- ANALISI DOPPIONI / RICETTE SIMILI -->
         <div id="duplicates-panel" class="panel-glass hidden">
           <div class="topbar">
             <div>
@@ -1112,8 +1151,15 @@
             <div class="stack">
               <div class="row">
                 <div>
-                  <label for="rec-title">Titolo ricetta</label>
-                  <input type="text" id="rec-title" placeholder="Es. Cantucci (Clerici)" required />
+                  <label for="rec-title">Titolo ricetta / guida</label>
+                  <input type="text" id="rec-title" placeholder="Es. Cantucci (Clerici) oppure Dispensa impasti" required />
+                </div>
+                <div>
+                  <label for="rec-item-type">Tipologia elemento</label>
+                  <select id="rec-item-type">
+                    <option value="recipe">Ricetta</option>
+                    <option value="literature">Guida / Letteratura</option>
+                  </select>
                 </div>
                 <div>
                   <label for="rec-category">Categoria</label>
@@ -1138,13 +1184,13 @@
               </div>
 
               <div>
-                <label for="rec-ingredients">Ingredienti (uno per riga)</label>
-                <textarea id="rec-ingredients" placeholder="Es. 500 g farina&#10;300 g zucchero" required></textarea>
+                <label id="ingredients-label" for="rec-ingredients">Ingredienti (uno per riga)</label>
+                <textarea id="rec-ingredients" placeholder="Es. 500 g farina&#10;300 g zucchero (o note/concetti chiave se Guida/Letteratura)" required></textarea>
               </div>
 
               <div>
-                <label for="rec-steps">Procedimento</label>
-                <textarea id="rec-steps" placeholder="Passaggi della preparazione..." style="min-height: 130px;" required></textarea>
+                <label id="steps-label" for="rec-steps">Procedimento</label>
+                <textarea id="rec-steps" placeholder="Passaggi della preparazione oppure testo della guida / dispensa..." style="min-height: 130px;" required></textarea>
               </div>
 
               <div class="row" style="margin-top: 4px;">
@@ -1161,7 +1207,7 @@
               </div>
 
               <div class="dialog-box stack">
-                <label for="refine-instruction-input">Dialoga con l'AI per rifinire o chiarire questa ricetta (testo o audio):</label>
+                <label for="refine-instruction-input">Dialoga con l'AI per rifinire o chiarire questo elemento (testo o audio):</label>
                 <input type="text" id="refine-instruction-input" placeholder="Es. Completa il procedimento o chiarisci una parola dubbia..." />
 
                 <div class="dialog-audio-box stack">
@@ -1182,9 +1228,9 @@
               </div>
 
               <div id="debug-prompt-box" class="debug-prompt-box">
-                <strong>Controllo / Debug ricetta (facoltativo):</strong>
+                <strong>Controllo / Debug (facoltativo):</strong>
                 <div style="font-size: 17px; margin: 6px 0 10px 0;">
-                  Vuoi che l'AI analizzi la ricetta — anche in un secondo momento modificandola — per segnalare dosi strane, passaggi mancanti o suggerimenti?
+                  Vuoi che l'AI analizzi il contenuto — anche in un secondo momento modificandolo — per segnalare dosi strane, passaggi mancanti o suggerimenti?
                 </div>
                 <div class="row">
                   <button type="button" id="run-debug-btn" class="secondary small">Sì, fai controllo / debug</button>
@@ -1193,7 +1239,7 @@
               </div>
 
               <div id="debug-result-box" class="debug-box hidden">
-                <strong>Esito controllo / debug ricetta:</strong>
+                <strong>Esito controllo / debug:</strong>
                 <div id="debug-summary" style="margin-top: 6px; font-size: 17px;"></div>
                 <ul id="debug-findings-list"></ul>
               </div>
@@ -1220,10 +1266,10 @@
       <div id="detail-meta" class="recipe-meta"></div>
       <div id="detail-course-badge-wrap" class="tag-row hidden"></div>
 
-      <div class="sheet-section-title">Ingredienti</div>
+      <div id="detail-sec1-title" class="sheet-section-title">Ingredienti</div>
       <div id="detail-ingredients" class="sheet-text"></div>
 
-      <div class="sheet-section-title">Procedimento</div>
+      <div id="detail-sec2-title" class="sheet-section-title">Procedimento</div>
       <div id="detail-steps" class="sheet-text"></div>
 
       <div id="detail-doubts-wrap" class="doubts-box hidden" style="margin-top: 12px;">
@@ -1318,9 +1364,9 @@
     ];
 
     const DEFAULT_AI_RULES =
-      "Se in una o più foto, audio, video o testo sono presenti PIÙ ricette distinte, separale in elementi diversi nell'array 'recipes'. " +
-      "Se più foto appartengono alla stessa ricetta (es. fronte/retro o pagine successive), uniscile in un'unica ricetta completa. " +
-      "Cataloga ogni ricetta scegliendo una delle categorie disponibili. " +
+      "Se in una o più foto, audio, video o testo sono presenti PIÙ ricette o guide distinte, separale in elementi diversi nell'array 'recipes'. " +
+      "Se più foto appartengono alla stessa ricetta o guida (es. fronte/retro o pagine successive), uniscile in un unico elemento completo. " +
+      "Cataloga ogni elemento scegliendo una delle categorie disponibili e indica 'itemType' come 'recipe' oppure 'literature' (se si tratta di dispense, appunti teorici, regole o guide del corso). " +
       "Usa 'Conserve' per marmellate, confetture, sottaceti, sott'oli e sughi da vasetto. " +
       "Usa 'Lievitati' per pane, pizza, focacce, cantucci/biscotti lievitati e brioche. " +
       "Distingui chiaramente testo stampato/a PC da scrittura a mano; se ci sono parole o finali di frase scritti a mano poco chiari, sbiaditi o troncati, segnalali in 'uncertainties'.";
@@ -1355,7 +1401,7 @@
     }
 
     let currentRole = null;
-    let activeListView = "archive"; // "archive" | "courses" | "drafts"
+    let activeListView = "archive";
     let categories = [...DEFAULT_CATEGORIES];
     let draftCategories = [...DEFAULT_CATEGORIES];
     let courses = [];
@@ -1509,9 +1555,13 @@
     const recipeForm = document.getElementById("recipe-form");
     const resetFormBtn = document.getElementById("reset-form-btn");
     const recipeMsg = document.getElementById("recipe-msg");
+    const recItemTypeSelect = document.getElementById("rec-item-type");
     const recCategorySelect = document.getElementById("rec-category");
     const recCourseSelect = document.getElementById("rec-course-select");
     const recCourseCustom = document.getElementById("rec-course-custom");
+    const ingredientsLabel = document.getElementById("ingredients-label");
+    const stepsLabel = document.getElementById("steps-label");
+
     const searchInput = document.getElementById("search-input");
     const categoryFilter = document.getElementById("category-filter");
     const archiveSectionTitle = document.getElementById("archive-section-title");
@@ -1521,6 +1571,8 @@
     const detailModal = document.getElementById("detail-modal");
     const closeModalBtn = document.getElementById("close-modal-btn");
     const detailCourseBadgeWrap = document.getElementById("detail-course-badge-wrap");
+    const detailSec1Title = document.getElementById("detail-sec1-title");
+    const detailSec2Title = document.getElementById("detail-sec2-title");
     const openSourcePhotoBtn = document.getElementById("open-source-photo-btn");
     const detailOriginCaption = document.getElementById("detail-origin-caption");
 
@@ -1544,6 +1596,22 @@
     function isDraftRecipe(r) {
       return r?.status === "draft";
     }
+
+    function isLiteratureItem(r) {
+      return r?.itemType === "literature";
+    }
+
+    function syncEditorTypeLabels() {
+      const isLit = recItemTypeSelect.value === "literature";
+      ingredientsLabel.textContent = isLit
+        ? "Argomenti / Punti chiave (uno per riga)"
+        : "Ingredienti (uno per riga)";
+      stepsLabel.textContent = isLit
+        ? "Testo guida / Letteratura / Dispensa"
+        : "Procedimento";
+    }
+
+    recItemTypeSelect.addEventListener("change", syncEditorTypeLabels);
 
     function stopLiveCamera() {
       if (cameraStream) {
@@ -1953,7 +2021,7 @@
 
         editorHeading.textContent = draftMode
           ? "Struttura e completa bozza"
-          : "Modifica ricetta";
+          : "Modifica elemento";
         editingIndicator.textContent = draftMode
           ? `Bozza "${recipe.title || "Senza titolo"}" — analizzala con l'AI o compila i campi, poi premi "Conferma e salva definitiva".`
           : `Stai modificando "${recipe.title || "Senza titolo"}" — puoi anche rilanciare il controllo / debug o dialogare con l'AI.`;
@@ -1970,6 +2038,9 @@
         }
 
         document.getElementById("rec-title").value = recipe.title || "";
+        recItemTypeSelect.value = isLiteratureItem(recipe) ? "literature" : "recipe";
+        syncEditorTypeLabels();
+
         syncCategoryDropdowns();
         recCategorySelect.value = categories.includes(recipe.category)
           ? recipe.category
@@ -2015,10 +2086,12 @@
         editingRecipePhotoDataUrl = null;
         savedDraftPhotoPreview.src = "";
         savedDraftPhotoBox.classList.add("hidden");
-        editorHeading.textContent = "Nuova ricetta";
+        editorHeading.textContent = "Nuova ricetta / guida";
         editingIndicator.classList.add("hidden");
         acquisitionSection.classList.remove("hidden");
         saveRecipeBtn.textContent = "Conferma e salva definitiva";
+        recItemTypeSelect.value = "recipe";
+        syncEditorTypeLabels();
         syncCourseDropdowns("");
         recCourseCustom.value = "";
       }
@@ -2220,13 +2293,14 @@
 
       const nowStr = new Date().toLocaleDateString("it-IT");
       const rawTitle = document.getElementById("rec-title").value.trim();
-      const title = rawTitle || (status === "draft" ? `Ricetta scansionata (${nowStr})` : "");
+      const title = rawTitle || (status === "draft" ? `Elemento scansionato (${nowStr})` : "");
+      const itemType = recItemTypeSelect.value === "literature" ? "literature" : "recipe";
       const category = recCategorySelect.value || (categories[categories.length - 1] || "Altro");
       const course = resolveSelectedCourse();
       const rawOrigin = document.getElementById("rec-origin").value.trim();
       const origin = rawOrigin || (currentPhotoDataUrls.length > 0 ? `Scansione foto (${currentPhotoDataUrls.length} fogli)` : "");
       const ingredients = document.getElementById("rec-ingredients").value.trim() ||
-        (status === "draft" ? "Da estrarre dalla foto / nota" : "");
+        (status === "draft" ? (itemType === "literature" ? "Argomenti da estrarre" : "Da estrarre dalla foto / nota") : "");
       const steps = document.getElementById("rec-steps").value.trim() ||
         (rawRecipeText.value.trim() || (status === "draft" ? "Da strutturare con AI" : ""));
 
@@ -2242,6 +2316,7 @@
 
       const payload = {
         title,
+        itemType,
         category,
         course: course || "",
         origin,
@@ -2265,7 +2340,13 @@
           clearRecipeForm(false);
           setEditorMode(false);
           newRecipeCard.classList.add("hidden");
-          activeListView = status === "draft" ? "drafts" : (course ? "courses" : "archive");
+          if (status === "draft") {
+            activeListView = "drafts";
+          } else if (course) {
+            activeListView = "courses";
+          } else {
+            activeListView = "archive";
+          }
           updateNavActiveState();
           renderRecipes();
         } else {
@@ -2280,11 +2361,17 @@
             const nextIdx = Math.min(activeExtractedIndex, extractedRecipesQueue.length - 1);
             clearRecipeForm(true);
             loadExtractedRecipeAt(nextIdx);
-            showAiStatus(`Ricetta "${title}" salvata! Ora rivedi e salva la prossima (${extractedRecipesQueue.length} rimaste).`, true);
+            showAiStatus(`Elemento "${title}" salvato! Ora rivedi e salva il prossimo (${extractedRecipesQueue.length} rimasti).`, true);
           } else {
             clearRecipeForm(false);
             newRecipeCard.classList.add("hidden");
-            activeListView = status === "draft" ? "drafts" : "archive";
+            if (status === "draft") {
+              activeListView = "drafts";
+            } else if (course) {
+              activeListView = "courses";
+            } else {
+              activeListView = "archive";
+            }
             updateNavActiveState();
             renderRecipes();
           }
@@ -2606,6 +2693,7 @@
     function normalizeRecipeItem(item) {
       return {
         title: item?.title || "",
+        itemType: item?.itemType === "literature" ? "literature" : "recipe",
         category: categories.includes(item?.category)
           ? item.category
           : (categories[categories.length - 1] || "Altro"),
@@ -2629,6 +2717,8 @@
       const item = extractedRecipesQueue[index];
 
       document.getElementById("rec-title").value = item.title;
+      recItemTypeSelect.value = item.itemType === "literature" ? "literature" : "recipe";
+      syncEditorTypeLabels();
       recCategorySelect.value = categories.includes(item.category)
         ? item.category
         : (categories[categories.length - 1] || "");
@@ -2653,7 +2743,7 @@
         return;
       }
 
-      multiRecipeLabel.textContent = `Trovate ${extractedRecipesQueue.length} ricette: rivedi e salva una alla volta`;
+      multiRecipeLabel.textContent = `Trovati ${extractedRecipesQueue.length} elementi: rivedi e salva uno alla volta`;
       multiRecipeButtons.innerHTML = "";
 
       extractedRecipesQueue.forEach((rec, idx) => {
@@ -2673,7 +2763,7 @@
     async function callGeminiRecipeExtractor({ photoDataUrls = [], audioMedia = null, videoMedia = null, rawText = "" }) {
       const knownCourses = getAllKnownCourses();
       const systemPrompt =
-        `Sei un assistente che digitalizza ricette di famiglia (anche su più fogli/pagine per la stessa ricetta, oppure con PIÙ ricette sullo stesso foglio o su più fogli, con parti stampate/a PC e parti scritte a mano in corsivo).\n` +
+        `Sei un assistente che digitalizza ricette e guide/dispense di corsi di cucina di famiglia (anche su più fogli/pagine, oppure con PIÙ elementi sullo stesso foglio o su più fogli, con parti stampate/a PC e parti scritte a mano in corsivo).\n` +
         `Categorie consentite: ${categories.join(", ")}.\n` +
         (knownCourses.length > 0 ? `Corsi già esistenti (usa uno di questi se esplicitamente indicato): ${knownCourses.join(", ")}.\n` : "") +
         `Regole dell'utente: ${aiRules}\n\n` +
@@ -2681,12 +2771,13 @@
         `{\n` +
         `  "recipes": [\n` +
         `    {\n` +
-        `      "title": "Titolo della ricetta",\n` +
+        `      "title": "Titolo della ricetta o guida",\n` +
+        `      "itemType": "recipe oppure literature",\n` +
         `      "category": "Una delle categorie consentite",\n` +
         `      "course": "Nome eventuale corso se indicato, altrimenti stringa vuota",\n` +
         `      "origin": "Es. Stampata/Bimby oppure Scritto a mano (2 fogli)",\n` +
-        `      "ingredients": "Un ingrediente per riga",\n` +
-        `      "steps": "Procedimento ordinato e leggibile",\n` +
+        `      "ingredients": "Un ingrediente per riga (oppure punti chiave se literature)",\n` +
+        `      "steps": "Procedimento ordinato oppure testo della guida/letteratura",\n` +
         `      "uncertainties": ["Parole o finali scritti a mano dubbi, sbiaditi o troncati, dosi ambigue o interpretazioni"]\n` +
         `    }\n` +
         `  ]\n` +
@@ -2703,18 +2794,18 @@
           }
         });
         parts.push({
-          text: "Analizza tutti i fogli forniti: se ci sono più fogli della stessa ricetta, uniscili; se ci sono più ricette distinte, separale in voci distinte di 'recipes'. Segnala in 'uncertainties' ogni parola scritta a mano o finale di frase poco chiaro o da verificare."
+          text: "Analizza tutti i fogli forniti: se ci sono più fogli della stessa ricetta o dispensa, uniscili; se ci sono più ricette o guide distinte, separale in voci distinte di 'recipes'. Segnala in 'uncertainties' ogni parola scritta a mano o finale di frase poco chiaro o da verificare."
         });
       }
 
       if (audioMedia?.base64) {
         parts.push({ inlineData: { mimeType: audioMedia.mimeType, data: audioMedia.base64 } });
-        parts.push({ text: "Ascolta l'audio, separa eventuali ricette multiple e segnala in 'uncertainties' parole o quantità poco chiare." });
+        parts.push({ text: "Ascolta l'audio, separa eventuali ricette o guide multiple e segnala in 'uncertainties' parole o quantità poco chiare." });
       }
 
       if (videoMedia?.base64) {
         parts.push({ inlineData: { mimeType: videoMedia.mimeType, data: videoMedia.base64 } });
-        parts.push({ text: "Osserva e ascolta il video, separa eventuali ricette multiple e segnala in 'uncertainties' parti o quantità poco chiare." });
+        parts.push({ text: "Osserva e ascolta il video, separa eventuali ricette o guide multiple e segnala in 'uncertainties' parti o quantità poco chiare." });
       }
 
       if (rawText) {
@@ -2753,7 +2844,7 @@
         loadExtractedRecipeAt(0);
         showAiStatus(
           extractedRecipesQueue.length > 1
-            ? `Trovate ${extractedRecipesQueue.length} ricette! Controlla la prima, verifica i dubbi e salvala; poi passa alla successiva.`
+            ? `Trovati ${extractedRecipesQueue.length} elementi! Controlla il primo, verifica i dubbi e salvalo; poi passa al successivo.`
             : "Foto analizzate: controlla i campi e i dubbi prima di salvare.",
           true
         );
@@ -2773,7 +2864,7 @@
         loadExtractedRecipeAt(0);
         showAiStatus(
           extractedRecipesQueue.length > 1
-            ? `Trovate ${extractedRecipesQueue.length} ricette nella foto salvata! Rivedi i campi e conferma come definitiva.`
+            ? `Trovati ${extractedRecipesQueue.length} elementi nella foto salvata! Rivedi i campi e conferma come definitiva.`
             : "Foto salvata analizzata: rivedi i campi e premi 'Conferma e salva definitiva'.",
           true
         );
@@ -2823,7 +2914,7 @@
     analyzeTextBtn.addEventListener("click", async () => {
       const txt = rawRecipeText.value.trim();
       if (!txt) {
-        showAiStatus("Scrivi o incolla prima il testo della ricetta.", false);
+        showAiStatus("Scrivi o incolla prima il testo della ricetta o guida.", false);
         return;
       }
       analyzeTextBtn.disabled = true;
@@ -2850,6 +2941,7 @@
 
       const currentDraft = {
         title: document.getElementById("rec-title").value.trim(),
+        itemType: recItemTypeSelect.value,
         category: recCategorySelect.value,
         course: resolveSelectedCourse(),
         origin: document.getElementById("rec-origin").value.trim(),
@@ -2860,19 +2952,20 @@
 
       refineAiBtn.disabled = true;
       refineReplyText.textContent = hasAudioInstruction
-        ? "Sto ascoltando l'audio e aggiornando la ricetta..."
-        : "Sto aggiornando la ricetta in base alle tue indicazioni...";
+        ? "Sto ascoltando l'audio e aggiornando il contenuto..."
+        : "Sto aggiornando il contenuto in base alle tue indicazioni...";
 
       try {
         const prompt =
-          `Stai aiutando l'utente a perfezionare una ricetta prima di salvarla nell'archivio.\n` +
+          `Stai aiutando l'utente a perfezionare una ricetta o guida/letteratura prima di salvarla nell'archivio.\n` +
           `Categorie consentite: ${categories.join(", ")}.\n` +
           `Bozza attuale:\n${JSON.stringify(currentDraft, null, 2)}\n\n` +
           `Istruzione testuale dell'utente: ${instruction || "(nessun testo, segui l'audio allegato)"}\n\n` +
           `Rispondi ESCLUSIVAMENTE con un JSON valido così strutturato:\n` +
           `{\n` +
-          `  "assistantNote": "Breve spiegazione di come hai aggiornato la ricetta",\n` +
+          `  "assistantNote": "Breve spiegazione di come hai aggiornato il contenuto",\n` +
           `  "title": "...",\n` +
+          `  "itemType": "recipe oppure literature",\n` +
           `  "category": "...",\n` +
           `  "course": "...",\n` +
           `  "origin": "...",\n` +
@@ -2884,7 +2977,7 @@
         const parts = [{ text: prompt }];
 
         if (hasAudioInstruction) {
-          parts.push({ text: "Audio con le istruzioni dell'utente per aggiornare la ricetta:" });
+          parts.push({ text: "Audio con le istruzioni dell'utente:" });
           parts.push({
             inlineData: {
               mimeType: currentRefineAudioMedia.mimeType,
@@ -2916,6 +3009,8 @@
         const norm = normalizeRecipeItem(updated);
 
         document.getElementById("rec-title").value = norm.title;
+        recItemTypeSelect.value = norm.itemType === "literature" ? "literature" : "recipe";
+        syncEditorTypeLabels();
         recCategorySelect.value = norm.category;
         syncCourseDropdowns(norm.course || currentDraft.course || "");
         recCourseCustom.value = "";
@@ -2950,18 +3045,18 @@
       const steps = document.getElementById("rec-steps").value.trim();
 
       if (!title && !ingredients && !steps) {
-        showAiStatus("Inserisci o estrai prima almeno titolo, ingredienti o procedimento da controllare.", false);
+        showAiStatus("Inserisci o estrai prima almeno titolo, ingredienti o testo da controllare.", false);
         return;
       }
 
       runDebugBtn.disabled = true;
-      showAiStatus("Controllo / debug della ricetta in corso (con ricerca web)...", true);
+      showAiStatus("Controllo / debug in corso (con ricerca web)...", true);
 
       try {
         const debugPrompt =
-          `Sei un esperto culinario e revisore di ricette. Analizza questa ricetta verificando anche sul web eventuali incongruenze, ` +
+          `Sei un esperto culinario e revisore di ricette e dispense. Analizza questo contenuto verificando anche sul web eventuali incongruenze, ` +
           `dosi fuori scala, passaggi mancanti, sicurezza alimentare (es. conserve/lievitati) o varianti tradizionali.\n` +
-          `Titolo: ${title}\nCategoria: ${category}\nIngredienti:\n${ingredients}\nProcedimento:\n${steps}\n\n` +
+          `Titolo: ${title}\nCategoria: ${category}\nDettagli/Ingredienti:\n${ingredients}\nTesto/Procedimento:\n${steps}\n\n` +
           `Rispondi con un JSON puro (senza markdown \`\`\`) con questa struttura:\n` +
           `{\n` +
           `  "summary": "Giudizio sintetico in 1-2 frasi",\n` +
@@ -2992,7 +3087,7 @@
         debugFindingsList.innerHTML = "";
         if (currentDebugReport.findings.length === 0) {
           const li = document.createElement("li");
-          li.textContent = "Nessuna criticità rilevata: la ricetta appare coerente.";
+          li.textContent = "Nessuna criticità rilevata: il contenuto appare coerente.";
           debugFindingsList.appendChild(li);
         } else {
           currentDebugReport.findings.forEach((f) => {
@@ -3003,16 +3098,15 @@
         }
         debugResultBox.classList.remove("hidden");
         debugPromptBox.classList.add("hidden");
-        showAiStatus("Controllo / debug completato: salva la ricetta per conservare l'esito.", true);
+        showAiStatus("Controllo / debug completato: salva l'elemento per conservare l'esito.", true);
       } catch (err) {
         console.error(err);
-        showAiStatus(err.message || "Errore durante il controllo della ricetta.", false);
+        showAiStatus(err.message || "Errore durante il controllo.", false);
       } finally {
         runDebugBtn.disabled = false;
       }
     });
 
-    // --- ANALISI DOPPIONI E RICETTE SIMILI ---
     function tokenizeText(str = "") {
       return String(str)
         .toLowerCase()
@@ -3034,7 +3128,7 @@
     }
 
     function findHeuristicDuplicates(recipes) {
-      const published = recipes.filter((r) => !isDraftRecipe(r));
+      const published = recipes.filter((r) => !isDraftRecipe(r) && !isLiteratureItem(r));
       const pairs = [];
 
       for (let i = 0; i < published.length; i++) {
@@ -3147,7 +3241,7 @@
     });
 
     aiDeepDuplicatesBtn.addEventListener("click", async () => {
-      const published = allRecipes.filter((r) => !isDraftRecipe(r));
+      const published = allRecipes.filter((r) => !isDraftRecipe(r) && !isLiteratureItem(r));
       if (published.length < 2) {
         duplicatesStatus.textContent = "Servono almeno 2 ricette definitive per un confronto AI.";
         duplicatesStatus.classList.remove("hidden");
@@ -3221,6 +3315,8 @@
     function clearRecipeForm(keepPhotoAndQueue = false) {
       stopLiveCamera();
       recipeForm.reset();
+      recItemTypeSelect.value = "recipe";
+      syncEditorTypeLabels();
       recCourseCustom.value = "";
       syncCourseDropdowns("");
       refineInstructionInput.value = "";
@@ -3285,16 +3381,30 @@
 
     function openDetailForRecipe(r) {
       const draft = isDraftRecipe(r);
-      document.getElementById("detail-title").textContent = r.title || "Senza titolo";
-      document.getElementById("detail-meta").textContent = [r.category, draft ? "Bozza da strutturare" : ""].filter(Boolean).join(" • ");
+      const lit = isLiteratureItem(r);
 
+      document.getElementById("detail-title").textContent = r.title || "Senza titolo";
+      document.getElementById("detail-meta").textContent = [
+        lit ? "Guida / Letteratura" : r.category,
+        draft ? "Bozza da strutturare" : ""
+      ].filter(Boolean).join(" • ");
+
+      const badges = [];
+      if (lit) badges.push(`<span class="lit-tag">Guida / Letteratura</span>`);
       if (r.course && String(r.course).trim()) {
-        detailCourseBadgeWrap.innerHTML = `<span class="course-tag">Corso: ${escapeHtml(String(r.course).trim())}</span>`;
+        badges.push(`<span class="course-tag">Corso: ${escapeHtml(String(r.course).trim())}</span>`);
+      }
+
+      if (badges.length > 0) {
+        detailCourseBadgeWrap.innerHTML = badges.join("");
         detailCourseBadgeWrap.classList.remove("hidden");
       } else {
         detailCourseBadgeWrap.innerHTML = "";
         detailCourseBadgeWrap.classList.add("hidden");
       }
+
+      detailSec1Title.textContent = lit ? "Argomenti / Punti chiave" : "Ingredienti";
+      detailSec2Title.textContent = lit ? "Guida / Letteratura" : "Procedimento";
 
       document.getElementById("detail-ingredients").textContent = r.ingredients || "";
       document.getElementById("detail-steps").textContent = r.steps || "";
@@ -3341,14 +3451,16 @@
     }
 
     function createRecipeCardElement(r, draft) {
+      const lit = isLiteratureItem(r);
       const div = document.createElement("div");
-      div.className = `recipe-item${draft ? " is-draft" : ""}`;
+      div.className = `recipe-item${draft ? " is-draft" : ""}${lit ? " is-literature" : ""}`;
 
       const metaText = [r.category, r.origin].filter(Boolean).join(" • ");
       const hasDebugBadge = r.debugReport && r.debugReport.summary ? " • Debug salvato" : "";
       const courseStr = r.course && String(r.course).trim() ? String(r.course).trim() : "";
 
       const tagsHtml = [
+        lit ? `<span class="lit-tag">Guida / Letteratura</span>` : "",
         courseStr ? `<span class="course-tag">Corso: ${escapeHtml(courseStr)}</span>` : "",
         draft ? `<span class="draft-tag">DA STRUTTURARE</span>` : ""
       ].filter(Boolean).join("");
@@ -3392,48 +3504,54 @@
       const term = searchInput.value.trim().toLowerCase();
       const cat = categoryFilter.value;
 
-      const publishedAll = allRecipes.filter((r) => !isDraftRecipe(r));
+      const publishedRecipesOnly = allRecipes.filter((r) => !isDraftRecipe(r) && !isLiteratureItem(r));
       const draftsAll = allRecipes.filter((r) => isDraftRecipe(r));
-      const recipesWithCourse = publishedAll.filter((r) => r.course && String(r.course).trim());
+      const publishedCourseItems = allRecipes.filter((r) => !isDraftRecipe(r) && r.course && String(r.course).trim());
+      const knownCourses = getAllKnownCourses();
 
-      sidebarCount.textContent = publishedAll.length;
-      coursesCount.textContent = recipesWithCourse.length;
+      sidebarCount.textContent = publishedRecipesOnly.length;
+      coursesCount.textContent = publishedCourseItems.length;
       draftsCount.textContent = draftsAll.length;
 
       const isDraftsMode = activeListView === "drafts" && canEditRecipes();
       const isCoursesMode = activeListView === "courses";
 
-      const baseList = isDraftsMode
-        ? draftsAll
-        : (isCoursesMode ? recipesWithCourse : publishedAll);
-
-      const filtered = baseList.filter((r) => {
-        const matchCat = cat === "ALL" || r.category === cat;
-        const hay = `${r.title || ""} ${r.course || ""} ${r.origin || ""} ${r.ingredients || ""} ${r.steps || ""}`.toLowerCase();
-        const matchTerm = !term || hay.includes(term);
-        return matchCat && matchTerm;
-      });
-
       recipesList.innerHTML = "";
 
       if (isCoursesMode) {
-        archiveSectionTitle.innerHTML = `Corsi di cucina (<span>${filtered.length}</span>)`;
-        archiveSectionSubtitle.textContent = "Ricette raggruppate per corso: ogni ricetta mantiene anche la propria categoria (Antipasti, Primi, Dolci, ecc.).";
+        archiveSectionTitle.innerHTML = `Corsi di cucina (<span>${knownCourses.length}</span>)`;
+        archiveSectionSubtitle.textContent = "Ogni corso raccoglie sia le Ricette (visibili anche nelle categorie) sia le Guide / Letteratura del corso.";
 
-        if (filtered.length === 0) {
-          recipesList.innerHTML = `<p style='color: var(--muted);'>Nessuna ricetta assegnata a un corso. Puoi assegnare un corso quando crei o modifichi una ricetta.</p>`;
+        if (knownCourses.length === 0) {
+          recipesList.innerHTML = `<p style='color: var(--muted);'>Nessun corso ancora creato. Aggiungilo nel pannello Setup (Admin) oppure quando inserisci o modifichi una ricetta.</p>`;
           return;
         }
 
-        const courseNames = [];
-        filtered.forEach((r) => {
-          const cName = String(r.course || "").trim();
-          if (cName && !courseNames.includes(cName)) courseNames.push(cName);
+        const matchingCourses = knownCourses.filter((cName) => {
+          if (!term) return true;
+          if (cName.toLowerCase().includes(term)) return true;
+          return publishedCourseItems.some(
+            (r) => String(r.course).trim() === cName &&
+              `${r.title || ""} ${r.category || ""} ${r.origin || ""} ${r.ingredients || ""} ${r.steps || ""}`.toLowerCase().includes(term)
+          );
         });
 
-        courseNames.forEach((cName) => {
-          const itemsInCourse = filtered.filter((r) => String(r.course || "").trim() === cName);
-          if (itemsInCourse.length === 0) return;
+        if (matchingCourses.length === 0) {
+          recipesList.innerHTML = `<p style='color: var(--muted);'>Nessun corso corrisponde alla ricerca.</p>`;
+          return;
+        }
+
+        matchingCourses.forEach((cName) => {
+          const allInCourse = publishedCourseItems.filter((r) => String(r.course).trim() === cName);
+          const filteredInCourse = allInCourse.filter((r) => {
+            const matchCat = cat === "ALL" || r.category === cat;
+            const hay = `${r.title || ""} ${r.course || ""} ${r.origin || ""} ${r.ingredients || ""} ${r.steps || ""}`.toLowerCase();
+            const matchTerm = !term || hay.includes(term) || cName.toLowerCase().includes(term);
+            return matchCat && matchTerm;
+          });
+
+          const courseRecipes = filteredInCourse.filter((r) => !isLiteratureItem(r));
+          const courseLiterature = filteredInCourse.filter((r) => isLiteratureItem(r));
 
           const sectionBox = document.createElement("div");
           sectionBox.className = "category-container is-course-group";
@@ -3445,21 +3563,51 @@
               ${getCourseIconSvg("course-icon")}
               <h3 class="category-title">${escapeHtml(cName)}</h3>
             </div>
-            <span class="count-pill course-pill">${itemsInCourse.length}</span>
+            <span class="count-pill course-pill">${courseRecipes.length + courseLiterature.length}</span>
           `;
-
-          const gridDiv = document.createElement("div");
-          gridDiv.className = "recipes-grid";
-          itemsInCourse.forEach((r) => {
-            gridDiv.appendChild(createRecipeCardElement(r, false));
-          });
-
           sectionBox.appendChild(headerDiv);
-          sectionBox.appendChild(gridDiv);
+
+          // Sottosezione Ricette del corso
+          const recSub = document.createElement("div");
+          recSub.className = "course-subblock";
+          recSub.innerHTML = `<h4 class="course-subblock-title">Ricette del corso (${courseRecipes.length})</h4>`;
+          if (courseRecipes.length === 0) {
+            recSub.innerHTML += `<p style="color:var(--muted); margin:0;">Nessuna ricetta ancora collegata a questo corso.</p>`;
+          } else {
+            const recGrid = document.createElement("div");
+            recGrid.className = "recipes-grid";
+            courseRecipes.forEach((r) => recGrid.appendChild(createRecipeCardElement(r, false)));
+            recSub.appendChild(recGrid);
+          }
+          sectionBox.appendChild(recSub);
+
+          // Sottosezione Guide / Letteratura del corso
+          const litSub = document.createElement("div");
+          litSub.className = "course-subblock";
+          litSub.innerHTML = `<h4 class="course-subblock-title literature-title">Guide / Letteratura (${courseLiterature.length})</h4>`;
+          if (courseLiterature.length === 0) {
+            litSub.innerHTML += `<p style="color:var(--muted); margin:0;">Nessuna guida o dispensa di letteratura ancora collegata a questo corso.</p>`;
+          } else {
+            const litGrid = document.createElement("div");
+            litGrid.className = "recipes-grid";
+            courseLiterature.forEach((r) => litGrid.appendChild(createRecipeCardElement(r, false)));
+            litSub.appendChild(litGrid);
+          }
+          sectionBox.appendChild(litSub);
+
           recipesList.appendChild(sectionBox);
         });
         return;
       }
+
+      const baseList = isDraftsMode ? draftsAll : publishedRecipesOnly;
+
+      const filtered = baseList.filter((r) => {
+        const matchCat = cat === "ALL" || r.category === cat;
+        const hay = `${r.title || ""} ${r.course || ""} ${r.origin || ""} ${r.ingredients || ""} ${r.steps || ""}`.toLowerCase();
+        const matchTerm = !term || hay.includes(term);
+        return matchCat && matchTerm;
+      });
 
       if (isDraftsMode) {
         archiveSectionTitle.innerHTML = `Ricette da controllare e strutturare (<span>${filtered.length}</span>)`;
@@ -3559,6 +3707,7 @@
     searchInput.addEventListener("input", renderRecipes);
     categoryFilter.addEventListener("change", renderRecipes);
     syncCategoryDropdowns();
+    syncEditorTypeLabels();
   </script>
 </body>
 </html>
