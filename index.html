@@ -21,6 +21,8 @@
       --accent: #8f3622;
       --accent-hover: #712818;
       --accent-soft: rgba(143, 54, 34, 0.1);
+      --draft-accent: #b87414;
+      --draft-soft: rgba(223, 160, 54, 0.16);
       --border: rgba(110, 98, 84, 0.22);
       --warn-bg: #fff5df;
       --warn-border: #dfa036;
@@ -77,13 +79,12 @@
 
     .app-shell {
       display: grid;
-      grid-template-columns: 250px minmax(0, 1fr);
+      grid-template-columns: 275px minmax(0, 1fr);
       gap: 32px;
       align-items: start;
       min-height: calc(100vh - 52px);
     }
 
-    /* MENU LATERALE MINIMAL SENZA RIQUADRI */
     .sidebar {
       position: sticky;
       top: 26px;
@@ -125,12 +126,13 @@
       color: var(--ink);
       text-align: left;
       padding: 9px 12px;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 500;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 10px;
+      justify-content: space-between;
+      gap: 8px;
       transition: color 0.15s, border-color 0.15s, background 0.15s;
     }
 
@@ -158,6 +160,13 @@
       background: rgba(255, 255, 255, 0.72);
       color: var(--ink);
       border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .count-pill.draft-pill {
+      background: var(--draft-soft);
+      color: #8a5308;
+      border-color: rgba(223, 160, 54, 0.45);
     }
 
     .sidebar-footer {
@@ -187,7 +196,6 @@
       min-width: 0;
     }
 
-    /* BARRA RICERCA FLUTTUANTE PULITA */
     .search-bar-row {
       display: grid;
       grid-template-columns: minmax(0, 1.5fr) minmax(200px, 0.8fr);
@@ -218,11 +226,16 @@
     .archive-heading {
       font-size: 22px;
       font-weight: 700;
-      margin: 0 0 18px 0;
+      margin: 0 0 6px 0;
       color: var(--ink);
     }
 
-    /* GRIGLIA RICETTE MINIMAL SENZA RIQUADRI PESANTI */
+    .archive-sub {
+      font-size: 14px;
+      color: var(--muted);
+      margin: 0 0 18px 0;
+    }
+
     .recipes-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -242,8 +255,13 @@
       transition: background 0.15s, transform 0.15s;
     }
 
+    .recipe-item.is-draft {
+      border-left: 4px solid var(--draft-accent);
+      background: rgba(255, 249, 236, 0.72);
+    }
+
     .recipe-item:hover {
-      background: rgba(255, 253, 249, 0.86);
+      background: rgba(255, 253, 249, 0.88);
       transform: translateY(-2px);
     }
 
@@ -260,6 +278,18 @@
       font-size: 13px;
       color: var(--muted);
       margin-top: 4px;
+    }
+
+    .draft-tag {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      background: var(--draft-soft);
+      color: #8a5308;
+      border: 1px solid rgba(223, 160, 54, 0.45);
     }
 
     .pill-actions {
@@ -283,6 +313,17 @@
       background: #fff;
       border-color: var(--accent);
       color: var(--accent);
+    }
+
+    .pill-btn.primary-pill {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .pill-btn.primary-pill:hover {
+      background: var(--accent-hover);
+      color: #fff;
     }
 
     .pill-btn.danger-ghost:hover {
@@ -355,6 +396,16 @@
     }
 
     button.secondary:hover:not(:disabled) { background: #fff; }
+
+    button.draft-btn {
+      background: #fff5df;
+      color: #7c4a03;
+      border: 1px solid #dfa036;
+    }
+
+    button.draft-btn:hover:not(:disabled) {
+      background: #ffebc2;
+    }
 
     button.danger {
       background: #b8292f;
@@ -512,7 +563,6 @@
       padding: 14px;
     }
 
-    /* MODALE DETTAGLIO RICETTA IN STILE FOGLIO A RIGHE */
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -583,7 +633,6 @@
       gap: 10px;
     }
 
-    /* LIGHTBOX INGRANDIMENTO FOTO ORIGINALE */
     .lightbox-backdrop {
       position: fixed;
       inset: 0;
@@ -647,7 +696,6 @@
 </head>
 <body>
   <div class="container">
-    <!-- SCHERMATA LOGIN -->
     <div id="login-view" class="login-wrap">
       <h1 style="font-family: var(--font-script); font-size: 48px; font-weight: 400; color: var(--ink); margin-bottom: 4px;">Le ricette di Luigina</h1>
       <p style="color: var(--muted);">Accedi per consultare o aggiornare l'archivio di famiglia.</p>
@@ -667,7 +715,6 @@
       <div id="auth-message" class="msg hidden"></div>
     </div>
 
-    <!-- APP PRINCIPALE CON MENU LATERALE MINIMAL E SFONDO CUCINA -->
     <div id="app-view" class="app-shell hidden">
       <aside class="sidebar">
         <div class="brand-box">
@@ -683,6 +730,10 @@
             <span>Archivio ricette</span>
             <span id="sidebar-count" class="count-pill">0</span>
           </button>
+          <button type="button" id="nav-drafts-btn" class="nav-link hidden">
+            <span>Da controllare / strutturare</span>
+            <span id="drafts-count" class="count-pill draft-pill">0</span>
+          </button>
           <button type="button" id="open-new-btn" class="nav-link hidden">
             <span>+ Nuova ricetta</span>
           </button>
@@ -697,13 +748,11 @@
       </aside>
 
       <main class="main-content">
-        <!-- RICERCA E FILTRI -->
         <div class="search-bar-row">
           <input type="search" id="search-input" class="floating-input" placeholder="Cerca per titolo, ingrediente o origine..." />
           <select id="category-filter" class="floating-input"></select>
         </div>
 
-        <!-- PANNELLO SETUP (SOLO ADMIN) -->
         <div id="setup-card" class="panel-glass hidden">
           <div class="topbar">
             <h2 style="margin: 0;">Pannello Setup (Admin)</h2>
@@ -764,7 +813,6 @@
           <div id="setup-msg" class="msg ok hidden"></div>
         </div>
 
-        <!-- NUOVA / MODIFICA RICETTA + AI + CODA MULTIPLA + DIALOGO + DEBUG FACOLTATIVO -->
         <div id="new-recipe-card" class="panel-glass hidden">
           <div class="topbar" style="margin-bottom: 12px;">
             <div>
@@ -782,7 +830,6 @@
               <button type="button" id="tab-text" class="secondary small mode-tab">Testo / Manuale</button>
             </div>
 
-            <!-- 1. FOTO (MULTI-FOGLIO + DRAG & DROP) -->
             <div id="panel-photo" class="stack" style="margin-bottom: 14px;">
               <div id="photo-dropzone" class="dropzone stack">
                 <label for="recipe-photo-input">
@@ -790,16 +837,16 @@
                 </label>
                 <input type="file" id="recipe-photo-input" accept="image/*" multiple />
                 <div style="font-size: 12px; color: var(--muted);">
-                  Suggerimento: puoi selezionare più immagini insieme oppure trascinarle qui con il mouse.
+                  Suggerimento: puoi selezionare più immagini insieme oppure trascinarle qui con il mouse. Se l'AI è occupata su smartphone, puoi salvare subito la foto in "Da controllare / strutturare" e analizzarla poi da PC.
                 </div>
                 <div id="photo-preview-list" class="photo-grid"></div>
               </div>
-              <div>
+              <div class="row" style="flex: 0 0 auto;">
                 <button type="button" id="analyze-photo-btn">Analizza foto con AI</button>
+                <button type="button" id="quick-save-draft-btn" class="draft-btn">Salva da strutturare (senza AI ora)</button>
               </div>
             </div>
 
-            <!-- 2. AUDIO / VOCE -->
             <div id="panel-audio" class="stack hidden" style="margin-bottom: 14px;">
               <label>Registra a voce oppure carica un file audio della ricetta:</label>
               <div class="row">
@@ -814,7 +861,6 @@
               </div>
             </div>
 
-            <!-- 3. VIDEO -->
             <div id="panel-video" class="stack hidden" style="margin-bottom: 14px;">
               <label for="recipe-video-input">Carica un breve video (meglio clip leggere sotto i 16 MB):</label>
               <input type="file" id="recipe-video-input" accept="video/*" />
@@ -824,19 +870,29 @@
               </div>
             </div>
 
-            <!-- 4. TESTO LIBERO -->
             <div id="panel-text" class="stack hidden" style="margin-bottom: 14px;">
-              <label for="raw-recipe-text">Incolla o scrivi un testo grezzo da far strutturare all'AI (oppure compila direttamente i campi sotto):</label>
+              <label for="raw-recipe-text">Incolla o scrivi un testo grezzo da far strutturare all'AI (oppure salvalo in bozza da strutturare poi):</label>
               <textarea id="raw-recipe-text" placeholder="Incolla qui una o più ricette grezze..."></textarea>
-              <div>
+              <div class="row" style="flex: 0 0 auto;">
                 <button type="button" id="analyze-text-btn">Struttura testo con AI</button>
+                <button type="button" id="quick-save-text-draft-btn" class="draft-btn">Salva testo da strutturare</button>
               </div>
             </div>
           </div>
 
+          <div id="saved-draft-photo-box" class="dialog-box hidden" style="margin-bottom: 14px;">
+            <div class="topbar">
+              <div>
+                <strong>Foto originale allegata a questa bozza</strong>
+                <div style="font-size: 13px; color: var(--muted);">Puoi avviare ora l'estrazione AI direttamente da questa foto salvata.</div>
+              </div>
+              <button type="button" id="analyze-saved-photo-btn">Analizza foto salvata con AI</button>
+            </div>
+            <img id="saved-draft-photo-preview" class="preview-img" style="margin-top: 10px;" alt="Foto salvata in bozza" />
+          </div>
+
           <div id="ai-status-msg" class="msg hidden"></div>
 
-          <!-- SELETTORE SE L'AI TROVA PIÙ RICETTE NELLO STESSO INPUT -->
           <div id="multi-recipe-bar" class="multi-bar hidden">
             <div class="topbar">
               <strong id="multi-recipe-label">Ricette rilevate:</strong>
@@ -844,7 +900,6 @@
             </div>
           </div>
 
-          <!-- MODULO FINALE DI REVISIONE + PANNELLO AFFIANCATO DIALOGO/DEBUG -->
           <form id="recipe-form" class="split-grid">
             <div class="stack">
               <div class="row">
@@ -874,19 +929,18 @@
               </div>
 
               <div class="row" style="margin-top: 4px;">
-                <button type="submit" id="save-recipe-btn">Conferma e salva ricetta</button>
+                <button type="submit" id="save-recipe-btn">Conferma e salva definitiva</button>
+                <button type="button" id="save-as-draft-form-btn" class="draft-btn">Salva in "Da controllare"</button>
                 <button type="button" id="reset-form-btn" class="secondary">Svuota campi</button>
               </div>
             </div>
 
             <div class="stack">
-              <!-- DUBBI DI LETTURA / INTERPRETAZIONE -->
               <div id="ai-doubts-box" class="doubts-box hidden">
                 <strong>Punti dubbi o da verificare:</strong>
                 <ul id="ai-doubts-list"></ul>
               </div>
 
-              <!-- DIALOGO COSTRUTTIVO CON L'AI PER PERFEZIONARE LA RICETTA -->
               <div class="dialog-box stack">
                 <label for="refine-instruction-input">Dialoga con l'AI per rifinire o chiarire questa ricetta:</label>
                 <input type="text" id="refine-instruction-input" placeholder="Es. Completa il procedimento o chiarisci una parola dubbia..." />
@@ -896,7 +950,6 @@
                 <div id="refine-reply-text" style="font-size: 13px; color: var(--muted);"></div>
               </div>
 
-              <!-- CONTROLLO / DEBUG FACOLTATIVO -->
               <div id="debug-prompt-box" class="debug-prompt-box">
                 <strong>Controllo / Debug ricetta (facoltativo):</strong>
                 <div style="font-size: 13px; margin: 6px 0 10px 0;">
@@ -918,16 +971,15 @@
           <div id="recipe-msg" class="msg hidden"></div>
         </div>
 
-        <!-- ELENCO RICETTE MINIMAL SU SFONDO -->
         <section class="archive-section">
-          <h2 class="archive-heading">Archivio ricette (<span id="recipes-count">0</span>)</h2>
+          <h2 id="archive-section-title" class="archive-heading">Archivio ricette (<span id="recipes-count">0</span>)</h2>
+          <p id="archive-section-subtitle" class="archive-sub">Ricette verificate e pronte da consultare.</p>
           <div id="recipes-list" class="recipes-grid">Caricamento...</div>
         </section>
       </main>
     </div>
   </div>
 
-  <!-- MODALE DETTAGLIO RICETTA IN STILE FOGLIO DI FAMIGLIA -->
   <div id="detail-modal" class="modal-backdrop hidden">
     <div class="modal-box recipe-sheet">
       <div class="topbar" style="margin-bottom: 6px;">
@@ -962,7 +1014,6 @@
     </div>
   </div>
 
-  <!-- LIGHTBOX INGRANDIMENTO FOTO ORIGINALE -->
   <div id="photo-lightbox" class="lightbox-backdrop hidden">
     <div class="topbar" style="width: 100%; max-width: 95vw; color: #fff;">
       <strong id="lightbox-title">Foto originale</strong>
@@ -1043,6 +1094,7 @@
       "Distingui chiaramente testo stampato/a PC da scrittura a mano; se ci sono parole o finali di frase scritti a mano poco chiari, sbiaditi o troncati, segnalali in 'uncertainties'.";
 
     let currentRole = null;
+    let activeListView = "archive";
     let categories = [...DEFAULT_CATEGORIES];
     let draftCategories = [...DEFAULT_CATEGORIES];
     let aiRules = DEFAULT_AI_RULES;
@@ -1078,6 +1130,8 @@
 
     const navArchiveBtn = document.getElementById("nav-archive-btn");
     const sidebarCount = document.getElementById("sidebar-count");
+    const navDraftsBtn = document.getElementById("nav-drafts-btn");
+    const draftsCount = document.getElementById("drafts-count");
     const openNewBtn = document.getElementById("open-new-btn");
     const openSetupBtn = document.getElementById("open-setup-btn");
     const setupCard = document.getElementById("setup-card");
@@ -1099,6 +1153,11 @@
     const acquisitionSection = document.getElementById("acquisition-section");
     const cancelNewBtn = document.getElementById("cancel-new-btn");
     const saveRecipeBtn = document.getElementById("save-recipe-btn");
+    const saveAsDraftFormBtn = document.getElementById("save-as-draft-form-btn");
+
+    const savedDraftPhotoBox = document.getElementById("saved-draft-photo-box");
+    const savedDraftPhotoPreview = document.getElementById("saved-draft-photo-preview");
+    const analyzeSavedPhotoBtn = document.getElementById("analyze-saved-photo-btn");
 
     const tabPhoto = document.getElementById("tab-photo");
     const tabAudio = document.getElementById("tab-audio");
@@ -1114,6 +1173,7 @@
     const recipePhotoInput = document.getElementById("recipe-photo-input");
     const photoPreviewList = document.getElementById("photo-preview-list");
     const analyzePhotoBtn = document.getElementById("analyze-photo-btn");
+    const quickSaveDraftBtn = document.getElementById("quick-save-draft-btn");
 
     const startRecBtn = document.getElementById("start-rec-btn");
     const stopRecBtn = document.getElementById("stop-rec-btn");
@@ -1128,6 +1188,7 @@
 
     const rawRecipeText = document.getElementById("raw-recipe-text");
     const analyzeTextBtn = document.getElementById("analyze-text-btn");
+    const quickSaveTextDraftBtn = document.getElementById("quick-save-text-draft-btn");
 
     const aiStatusMsg = document.getElementById("ai-status-msg");
     const multiRecipeBar = document.getElementById("multi-recipe-bar");
@@ -1154,8 +1215,9 @@
     const recCategorySelect = document.getElementById("rec-category");
     const searchInput = document.getElementById("search-input");
     const categoryFilter = document.getElementById("category-filter");
+    const archiveSectionTitle = document.getElementById("archive-section-title");
+    const archiveSectionSubtitle = document.getElementById("archive-section-subtitle");
     const recipesList = document.getElementById("recipes-list");
-    const recipesCount = document.getElementById("recipes-count");
 
     const detailModal = document.getElementById("detail-modal");
     const closeModalBtn = document.getElementById("close-modal-btn");
@@ -1179,13 +1241,18 @@
       return currentRole === "admin" || currentRole === "editor";
     }
 
+    function isDraftRecipe(r) {
+      return r?.status === "draft";
+    }
+
     function updateNavActiveState() {
-      openNewBtn.classList.toggle("active-nav", !newRecipeCard.classList.contains("hidden"));
-      openSetupBtn.classList.toggle("active-nav", !setupCard.classList.contains("hidden"));
-      navArchiveBtn.classList.toggle(
-        "active-nav",
-        newRecipeCard.classList.contains("hidden") && setupCard.classList.contains("hidden")
-      );
+      const editorOpen = !newRecipeCard.classList.contains("hidden");
+      const setupOpen = !setupCard.classList.contains("hidden");
+
+      openNewBtn.classList.toggle("active-nav", editorOpen);
+      openSetupBtn.classList.toggle("active-nav", setupOpen);
+      navArchiveBtn.classList.toggle("active-nav", !editorOpen && !setupOpen && activeListView === "archive");
+      navDraftsBtn.classList.toggle("active-nav", !editorOpen && !setupOpen && activeListView === "drafts");
     }
 
     function showAuthMsg(text) {
@@ -1251,9 +1318,12 @@
 
         if (canEditRecipes()) {
           openNewBtn.classList.remove("hidden");
+          navDraftsBtn.classList.remove("hidden");
         } else {
           openNewBtn.classList.add("hidden");
+          navDraftsBtn.classList.add("hidden");
           newRecipeCard.classList.add("hidden");
+          activeListView = "archive";
         }
 
         if (currentRole === "admin") {
@@ -1275,10 +1345,20 @@
     });
 
     navArchiveBtn.addEventListener("click", () => {
+      activeListView = "archive";
       newRecipeCard.classList.add("hidden");
       setupCard.classList.add("hidden");
       updateNavActiveState();
-      searchInput.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      renderRecipes();
+    });
+
+    navDraftsBtn.addEventListener("click", () => {
+      if (!canEditRecipes()) return;
+      activeListView = "drafts";
+      newRecipeCard.classList.add("hidden");
+      setupCard.classList.add("hidden");
+      updateNavActiveState();
+      renderRecipes();
     });
 
     function listenToSettings() {
@@ -1466,11 +1546,25 @@
       if (isEditing && recipe) {
         editingRecipeId = recipe.id;
         editingRecipePhotoDataUrl = recipe.photoDataUrl || null;
-        editorHeading.textContent = "Modifica ricetta";
-        editingIndicator.textContent = `Stai modificando "${recipe.title || "Senza titolo"}" — puoi anche rilanciare il controllo / debug o dialogare con l'AI.`;
+        const draftMode = isDraftRecipe(recipe);
+
+        editorHeading.textContent = draftMode
+          ? "Struttura e completa bozza"
+          : "Modifica ricetta";
+        editingIndicator.textContent = draftMode
+          ? `Bozza "${recipe.title || "Senza titolo"}" — analizzala con l'AI o compila i campi, poi premi "Conferma e salva definitiva".`
+          : `Stai modificando "${recipe.title || "Senza titolo"}" — puoi anche rilanciare il controllo / debug o dialogare con l'AI.`;
         editingIndicator.classList.remove("hidden");
         acquisitionSection.classList.add("hidden");
-        saveRecipeBtn.textContent = "Salva modifiche";
+        saveRecipeBtn.textContent = draftMode ? "Conferma e salva definitiva" : "Salva modifiche";
+
+        if (editingRecipePhotoDataUrl) {
+          savedDraftPhotoPreview.src = editingRecipePhotoDataUrl;
+          savedDraftPhotoBox.classList.remove("hidden");
+        } else {
+          savedDraftPhotoPreview.src = "";
+          savedDraftPhotoBox.classList.add("hidden");
+        }
 
         document.getElementById("rec-title").value = recipe.title || "";
         syncCategoryDropdowns();
@@ -1512,10 +1606,12 @@
       } else {
         editingRecipeId = null;
         editingRecipePhotoDataUrl = null;
+        savedDraftPhotoPreview.src = "";
+        savedDraftPhotoBox.classList.add("hidden");
         editorHeading.textContent = "Nuova ricetta";
         editingIndicator.classList.add("hidden");
         acquisitionSection.classList.remove("hidden");
-        saveRecipeBtn.textContent = "Conferma e salva ricetta";
+        saveRecipeBtn.textContent = "Conferma e salva definitiva";
       }
     }
 
@@ -1637,6 +1733,113 @@
     photoDropzone.addEventListener("drop", async (e) => {
       const files = e.dataTransfer?.files;
       await handleIncomingPhotoFiles(files);
+    });
+
+    async function saveRecipeRecord({ status = "published", quickMode = false } = {}) {
+      if (!canEditRecipes()) return;
+      recipeMsg.classList.add("hidden");
+
+      const nowStr = new Date().toLocaleDateString("it-IT");
+      const rawTitle = document.getElementById("rec-title").value.trim();
+      const title = rawTitle || (status === "draft" ? `Ricetta scansionata (${nowStr})` : "");
+      const category = recCategorySelect.value || (categories[categories.length - 1] || "Altro");
+      const rawOrigin = document.getElementById("rec-origin").value.trim();
+      const origin = rawOrigin || (currentPhotoDataUrls.length > 0 ? `Scansione foto (${currentPhotoDataUrls.length} fogli)` : "");
+      const ingredients = document.getElementById("rec-ingredients").value.trim() ||
+        (status === "draft" ? "Da estrarre dalla foto / nota" : "");
+      const steps = document.getElementById("rec-steps").value.trim() ||
+        (rawRecipeText.value.trim() || (status === "draft" ? "Da strutturare con AI" : ""));
+
+      const firstPhoto = currentPhotoDataUrls[0] || null;
+      const photoToSave = firstPhoto && firstPhoto.length < 780000
+        ? firstPhoto
+        : editingRecipePhotoDataUrl;
+
+      if (quickMode && !photoToSave && !rawRecipeText.value.trim() && !rawTitle) {
+        showAiStatus("Scatta/carica almeno una foto oppure scrivi un titolo o testo prima di salvare la bozza.", false);
+        return;
+      }
+
+      const payload = {
+        title,
+        category,
+        origin,
+        ingredients,
+        steps,
+        status,
+        photoDataUrl: photoToSave || null,
+        uncertainties: currentUncertainties,
+        debugReport: currentDebugReport
+      };
+
+      try {
+        if (editingRecipeId) {
+          await updateDoc(doc(db, "recipes", editingRecipeId), {
+            ...payload,
+            updatedAt: serverTimestamp(),
+            updatedBy: auth.currentUser.uid
+          });
+          clearRecipeForm(false);
+          setEditorMode(false);
+          newRecipeCard.classList.add("hidden");
+          activeListView = status === "draft" ? "drafts" : "archive";
+          updateNavActiveState();
+          renderRecipes();
+        } else {
+          await addDoc(collection(db, "recipes"), {
+            ...payload,
+            createdBy: auth.currentUser.uid,
+            createdAt: serverTimestamp()
+          });
+
+          if (extractedRecipesQueue.length > 1 && status === "published") {
+            extractedRecipesQueue.splice(activeExtractedIndex, 1);
+            const nextIdx = Math.min(activeExtractedIndex, extractedRecipesQueue.length - 1);
+            clearRecipeForm(true);
+            loadExtractedRecipeAt(nextIdx);
+            showAiStatus(`Ricetta "${title}" salvata! Ora rivedi e salva la prossima (${extractedRecipesQueue.length} rimaste).`, true);
+          } else {
+            clearRecipeForm(false);
+            newRecipeCard.classList.add("hidden");
+            activeListView = status === "draft" ? "drafts" : "archive";
+            updateNavActiveState();
+            renderRecipes();
+          }
+        }
+      } catch (err) {
+        console.error(err);
+        const targetBox = quickMode ? aiStatusMsg : recipeMsg;
+        targetBox.textContent = "Impossibile salvare: verifica la connessione o la dimensione della foto.";
+        targetBox.classList.remove("ok");
+        targetBox.classList.remove("hidden");
+      }
+    }
+
+    quickSaveDraftBtn.addEventListener("click", async () => {
+      quickSaveDraftBtn.disabled = true;
+      try {
+        await saveRecipeRecord({ status: "draft", quickMode: true });
+      } finally {
+        quickSaveDraftBtn.disabled = false;
+      }
+    });
+
+    quickSaveTextDraftBtn.addEventListener("click", async () => {
+      quickSaveTextDraftBtn.disabled = true;
+      try {
+        await saveRecipeRecord({ status: "draft", quickMode: true });
+      } finally {
+        quickSaveTextDraftBtn.disabled = false;
+      }
+    });
+
+    saveAsDraftFormBtn.addEventListener("click", async () => {
+      saveAsDraftFormBtn.disabled = true;
+      try {
+        await saveRecipeRecord({ status: "draft", quickMode: false });
+      } finally {
+        saveAsDraftFormBtn.disabled = false;
+      }
     });
 
     startRecBtn.addEventListener("click", async () => {
@@ -1843,7 +2046,7 @@
         }
       }
 
-      throw lastErr || new Error("I server Gemini sono momentaneamente sovraccarichi. Riprova tra un minuto.");
+      throw lastErr || new Error("I server Gemini sono momentaneamente sovraccarichi. Puoi salvare la bozza in 'Da controllare' e analizzarla più tardi.");
     }
 
     function normalizeRecipeItem(item) {
@@ -2000,6 +2203,26 @@
       }
     });
 
+    analyzeSavedPhotoBtn.addEventListener("click", async () => {
+      if (!editingRecipePhotoDataUrl) return;
+      analyzeSavedPhotoBtn.disabled = true;
+      showAiStatus(`Analisi della foto salvata in corso con ${getConfiguredModel()}...`, true);
+      try {
+        extractedRecipesQueue = await callGeminiRecipeExtractor({ photoDataUrls: [editingRecipePhotoDataUrl] });
+        loadExtractedRecipeAt(0);
+        showAiStatus(
+          extractedRecipesQueue.length > 1
+            ? `Trovate ${extractedRecipesQueue.length} ricette nella foto salvata! Rivedi i campi e conferma come definitiva.`
+            : "Foto salvata analizzata: rivedi i campi e premi 'Conferma e salva definitiva'.",
+          true
+        );
+      } catch (err) {
+        showAiStatus(err.message || "Errore durante l'analisi della foto salvata.", false);
+      } finally {
+        analyzeSavedPhotoBtn.disabled = false;
+      }
+    });
+
     analyzeAudioBtn.addEventListener("click", async () => {
       if (!currentAudioMedia?.base64) {
         showAiStatus("Registra o carica prima un file audio.", false);
@@ -2092,7 +2315,11 @@
           `}`;
 
         const parts = [{ text: prompt }];
-        currentPhotoDataUrls.forEach((dataUrl) => {
+        const refPhotos = currentPhotoDataUrls.length > 0
+          ? currentPhotoDataUrls
+          : (editingRecipePhotoDataUrl ? [editingRecipePhotoDataUrl] : []);
+
+        refPhotos.forEach((dataUrl) => {
           const match = dataUrl.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,(.+)$/);
           if (match) parts.push({ inlineData: { mimeType: match[1], data: match[2] } });
         });
@@ -2249,66 +2476,7 @@
 
     recipeForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      if (!canEditRecipes()) return;
-      recipeMsg.classList.add("hidden");
-
-      const title = document.getElementById("rec-title").value.trim();
-      const category = recCategorySelect.value;
-      const origin = document.getElementById("rec-origin").value.trim();
-      const ingredients = document.getElementById("rec-ingredients").value.trim();
-      const steps = document.getElementById("rec-steps").value.trim();
-
-      const firstPhoto = currentPhotoDataUrls[0] || null;
-      const photoToSave = firstPhoto && firstPhoto.length < 780000
-        ? firstPhoto
-        : editingRecipePhotoDataUrl;
-
-      const payload = {
-        title,
-        category,
-        origin,
-        ingredients,
-        steps,
-        photoDataUrl: photoToSave || null,
-        uncertainties: currentUncertainties,
-        debugReport: currentDebugReport
-      };
-
-      try {
-        if (editingRecipeId) {
-          await updateDoc(doc(db, "recipes", editingRecipeId), {
-            ...payload,
-            updatedAt: serverTimestamp(),
-            updatedBy: auth.currentUser.uid
-          });
-          clearRecipeForm(false);
-          setEditorMode(false);
-          newRecipeCard.classList.add("hidden");
-          updateNavActiveState();
-        } else {
-          await addDoc(collection(db, "recipes"), {
-            ...payload,
-            createdBy: auth.currentUser.uid,
-            createdAt: serverTimestamp()
-          });
-
-          if (extractedRecipesQueue.length > 1) {
-            extractedRecipesQueue.splice(activeExtractedIndex, 1);
-            const nextIdx = Math.min(activeExtractedIndex, extractedRecipesQueue.length - 1);
-            clearRecipeForm(true);
-            loadExtractedRecipeAt(nextIdx);
-            showAiStatus(`Ricetta "${title}" salvata! Ora rivedi e salva la prossima (${extractedRecipesQueue.length} rimaste).`, true);
-          } else {
-            clearRecipeForm(false);
-            newRecipeCard.classList.add("hidden");
-            updateNavActiveState();
-          }
-        }
-      } catch (err) {
-        console.error(err);
-        recipeMsg.textContent = "Impossibile salvare: verifica i permessi o la dimensione della foto.";
-        recipeMsg.classList.remove("hidden");
-      }
+      await saveRecipeRecord({ status: "published", quickMode: false });
     });
 
     function listenToRecipes() {
@@ -2327,25 +2495,43 @@
       const term = searchInput.value.trim().toLowerCase();
       const cat = categoryFilter.value;
 
-      const filtered = allRecipes.filter((r) => {
+      const publishedAll = allRecipes.filter((r) => !isDraftRecipe(r));
+      const draftsAll = allRecipes.filter((r) => isDraftRecipe(r));
+
+      sidebarCount.textContent = publishedAll.length;
+      draftsCount.textContent = draftsAll.length;
+
+      const baseList = activeListView === "drafts" && canEditRecipes()
+        ? draftsAll
+        : publishedAll;
+
+      const filtered = baseList.filter((r) => {
         const matchCat = cat === "ALL" || r.category === cat;
         const hay = `${r.title || ""} ${r.origin || ""} ${r.ingredients || ""} ${r.steps || ""}`.toLowerCase();
         const matchTerm = !term || hay.includes(term);
         return matchCat && matchTerm;
       });
 
-      recipesCount.textContent = filtered.length;
-      sidebarCount.textContent = allRecipes.length;
+      if (activeListView === "drafts" && canEditRecipes()) {
+        archiveSectionTitle.innerHTML = `Ricette da controllare e strutturare (<span>${filtered.length}</span>)`;
+        archiveSectionSubtitle.textContent = "Bozze scansionate o annotate al volo: clicca su 'Struttura / Modifica' per farle elaborare dall'AI e renderle definitive.";
+      } else {
+        archiveSectionTitle.innerHTML = `Archivio ricette (<span>${filtered.length}</span>)`;
+        archiveSectionSubtitle.textContent = "Ricette verificate e pronte da consultare.";
+      }
 
       if (filtered.length === 0) {
-        recipesList.innerHTML = "<p style='color: var(--muted);'>Nessuna ricetta trovata.</p>";
+        recipesList.innerHTML = activeListView === "drafts"
+          ? "<p style='color: var(--muted);'>Nessuna ricetta in attesa di controllo o strutturazione.</p>"
+          : "<p style='color: var(--muted);'>Nessuna ricetta trovata.</p>";
         return;
       }
 
       recipesList.innerHTML = "";
       filtered.forEach((r) => {
+        const draft = isDraftRecipe(r);
         const div = document.createElement("div");
-        div.className = "recipe-item";
+        div.className = `recipe-item${draft ? " is-draft" : ""}`;
 
         const metaText = [r.category, r.origin].filter(Boolean).join(" • ");
         const hasDebugBadge = r.debugReport && r.debugReport.summary ? " • Debug salvato" : "";
@@ -2354,17 +2540,18 @@
           <div>
             <span class="recipe-card-title">${escapeHtml(r.title || "Senza titolo")}</span>
             <div class="recipe-meta">${escapeHtml(metaText + hasDebugBadge)}</div>
+            ${draft ? `<span class="draft-tag">DA STRUTTURARE</span>` : ""}
           </div>
           <div class="pill-actions">
             <button type="button" class="pill-btn open-detail-btn">Apri</button>
-            ${canEditRecipes() ? `<button type="button" class="pill-btn edit-btn">Modifica</button>` : ""}
+            ${canEditRecipes() ? `<button type="button" class="pill-btn${draft ? " primary-pill" : ""} edit-btn">${draft ? "Struttura / Modifica" : "Modifica"}</button>` : ""}
             ${currentRole === "admin" ? `<button type="button" class="pill-btn danger-ghost del-btn">Elimina</button>` : ""}
           </div>
         `;
 
         div.querySelector(".open-detail-btn").addEventListener("click", () => {
           document.getElementById("detail-title").textContent = r.title || "Senza titolo";
-          document.getElementById("detail-meta").textContent = [r.category].filter(Boolean).join(" • ");
+          document.getElementById("detail-meta").textContent = [r.category, draft ? "Bozza da strutturare" : ""].filter(Boolean).join(" • ");
           document.getElementById("detail-ingredients").textContent = r.ingredients || "";
           document.getElementById("detail-steps").textContent = r.steps || "";
 
