@@ -566,6 +566,22 @@
       background: var(--accent-soft);
     }
 
+    .camera-live-box {
+      padding: 12px;
+      border-radius: var(--radius-md);
+      background: #1b1815;
+      color: #fff;
+      border: 1px solid var(--border);
+    }
+
+    .camera-video {
+      width: 100%;
+      max-height: 300px;
+      border-radius: var(--radius-sm);
+      background: #000;
+      display: block;
+    }
+
     .photo-grid {
       display: flex;
       flex-wrap: wrap;
@@ -916,11 +932,28 @@
             <div id="panel-photo" class="stack" style="margin-bottom: 14px;">
               <div id="photo-dropzone" class="dropzone stack">
                 <label for="recipe-photo-input">
-                  Scatta o scegli uno o più fogli (anche fronte/retro o più pagine per la stessa ricetta), oppure trascina qui i file da PC:
+                  Scatta al volo con la fotocamera, scegli da file o trascina qui i fogli da PC:
                 </label>
+
+                <div class="row" style="flex: 0 0 auto;">
+                  <button type="button" id="open-camera-btn">Scatta foto</button>
+                  <button type="button" id="native-camera-btn" class="secondary small">Fotocamera rapida</button>
+                </div>
+
+                <div id="camera-live-box" class="camera-live-box stack hidden">
+                  <video id="camera-video" class="camera-video" autoplay playsinline muted></video>
+                  <canvas id="camera-canvas" class="hidden"></canvas>
+                  <div class="row" style="flex: 0 0 auto;">
+                    <button type="button" id="snap-photo-btn">Scatta foglio</button>
+                    <button type="button" id="close-camera-btn" class="secondary small">Chiudi fotocamera</button>
+                  </div>
+                </div>
+
                 <input type="file" id="recipe-photo-input" accept="image/*" multiple />
+                <input type="file" id="native-camera-input" accept="image/*" capture="environment" class="hidden" />
+
                 <div style="font-size: 16px; color: var(--muted);">
-                  Suggerimento: puoi selezionare più immagini insieme oppure trascinarle qui con il mouse. Se l'AI è occupata su smartphone, puoi salvare subito la foto in "Da controllare / strutturare" e analizzarla poi da PC.
+                  Puoi scattare più fogli uno dopo l'altro con "Scatta foto", oppure salvare subito in "Da controllare / strutturare" se su smartphone l'AI è occupata.
                 </div>
                 <div id="photo-preview-list" class="photo-grid"></div>
               </div>
@@ -1235,6 +1268,7 @@
     let currentUncertainties = [];
     let currentDebugReport = null;
 
+    let cameraStream = null;
     let mediaRecorder = null;
     let recChunks = [];
     let recInterval = null;
@@ -1296,6 +1330,15 @@
     const panelText = document.getElementById("panel-text");
 
     const photoDropzone = document.getElementById("photo-dropzone");
+    const openCameraBtn = document.getElementById("open-camera-btn");
+    const nativeCameraBtn = document.getElementById("native-camera-btn");
+    const nativeCameraInput = document.getElementById("native-camera-input");
+    const cameraLiveBox = document.getElementById("camera-live-box");
+    const cameraVideo = document.getElementById("camera-video");
+    const cameraCanvas = document.getElementById("camera-canvas");
+    const snapPhotoBtn = document.getElementById("snap-photo-btn");
+    const closeCameraBtn = document.getElementById("close-camera-btn");
+
     const recipePhotoInput = document.getElementById("recipe-photo-input");
     const photoPreviewList = document.getElementById("photo-preview-list");
     const analyzePhotoBtn = document.getElementById("analyze-photo-btn");
@@ -1377,6 +1420,15 @@
       return r?.status === "draft";
     }
 
+    function stopLiveCamera() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach((t) => t.stop());
+        cameraStream = null;
+      }
+      cameraVideo.srcObject = null;
+      cameraLiveBox.classList.add("hidden");
+    }
+
     function updateNavActiveState() {
       const editorOpen = !newRecipeCard.classList.contains("hidden");
       const setupOpen = !setupCard.classList.contains("hidden");
@@ -1418,6 +1470,7 @@
     });
 
     document.getElementById("logout-btn").addEventListener("click", async () => {
+      stopLiveCamera();
       if (unsubscribeRecipes) unsubscribeRecipes();
       if (unsubscribeSettings) unsubscribeSettings();
       await signOut(auth);
@@ -1425,6 +1478,7 @@
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
+        stopLiveCamera();
         currentRole = null;
         allRecipes = [];
         appView.classList.add("hidden");
@@ -1477,6 +1531,7 @@
     });
 
     navArchiveBtn.addEventListener("click", () => {
+      stopLiveCamera();
       activeListView = "archive";
       newRecipeCard.classList.add("hidden");
       setupCard.classList.add("hidden");
@@ -1486,6 +1541,7 @@
 
     navDraftsBtn.addEventListener("click", () => {
       if (!canEditRecipes()) return;
+      stopLiveCamera();
       activeListView = "drafts";
       newRecipeCard.classList.add("hidden");
       setupCard.classList.add("hidden");
@@ -1550,6 +1606,7 @@
 
     openSetupBtn.addEventListener("click", () => {
       if (currentRole !== "admin") return;
+      stopLiveCamera();
       const opening = setupCard.classList.contains("hidden");
       if (opening) {
         draftCategories = [...categories];
@@ -1661,6 +1718,7 @@
     });
 
     function setInsertMode(mode) {
+      if (mode !== "photo") stopLiveCamera();
       tabPhoto.classList.toggle("active", mode === "photo");
       tabAudio.classList.toggle("active", mode === "audio");
       tabVideo.classList.toggle("active", mode === "video");
@@ -1753,6 +1811,7 @@
 
     openNewBtn.addEventListener("click", () => {
       if (!canEditRecipes()) return;
+      stopLiveCamera();
       const opening = newRecipeCard.classList.contains("hidden");
       if (opening) {
         clearRecipeForm(false);
@@ -1767,6 +1826,7 @@
     });
 
     cancelNewBtn.addEventListener("click", () => {
+      stopLiveCamera();
       newRecipeCard.classList.add("hidden");
       updateNavActiveState();
     });
@@ -1788,27 +1848,72 @@
       });
     }
 
+    function compressDataUrl(dataUrl, maxWidth = 1440, quality = 0.82) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          const scale = img.width > maxWidth ? maxWidth / img.width : 1;
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL("image/jpeg", quality));
+        };
+        img.onerror = reject;
+        img.src = dataUrl;
+      });
+    }
+
     function readImageAsCompressedDataUrl(file, maxWidth = 1440, quality = 0.82) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = (ev) => {
-          const img = new Image();
-          img.onload = () => {
-            const scale = img.width > maxWidth ? maxWidth / img.width : 1;
-            const canvas = document.createElement("canvas");
-            canvas.width = Math.round(img.width * scale);
-            canvas.height = Math.round(img.height * scale);
-            const ctx = canvas.getContext("2d");
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            resolve(canvas.toDataURL("image/jpeg", quality));
-          };
-          img.onerror = reject;
-          img.src = ev.target.result;
-        };
+        reader.onload = (ev) => compressDataUrl(ev.target.result, maxWidth, quality).then(resolve).catch(reject);
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
     }
+
+    openCameraBtn.addEventListener("click", async () => {
+      try {
+        stopLiveCamera();
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" } },
+          audio: false
+        });
+        cameraVideo.srcObject = cameraStream;
+        cameraLiveBox.classList.remove("hidden");
+      } catch (err) {
+        console.error(err);
+        nativeCameraInput.click();
+      }
+    });
+
+    nativeCameraBtn.addEventListener("click", () => {
+      nativeCameraInput.click();
+    });
+
+    nativeCameraInput.addEventListener("change", async (e) => {
+      await handleIncomingPhotoFiles(e.target.files);
+      nativeCameraInput.value = "";
+    });
+
+    snapPhotoBtn.addEventListener("click", async () => {
+      if (!cameraVideo.videoWidth || !cameraVideo.videoHeight) return;
+      cameraCanvas.width = cameraVideo.videoWidth;
+      cameraCanvas.height = cameraVideo.videoHeight;
+      const ctx = cameraCanvas.getContext("2d");
+      ctx.drawImage(cameraVideo, 0, 0, cameraCanvas.width, cameraCanvas.height);
+      const rawSnap = cameraCanvas.toDataURL("image/jpeg", 0.9);
+      const compressed = await compressDataUrl(rawSnap);
+      currentPhotoDataUrls.push(compressed);
+      renderPhotoPreviews();
+      showAiStatus(`Scattato Foglio ${currentPhotoDataUrls.length}! Puoi scattarne un altro o procedere.`, true);
+    });
+
+    closeCameraBtn.addEventListener("click", () => {
+      stopLiveCamera();
+    });
 
     function renderPhotoPreviews() {
       photoPreviewList.innerHTML = "";
@@ -1873,6 +1978,7 @@
 
     async function saveRecipeRecord({ status = "published", quickMode = false } = {}) {
       if (!canEditRecipes()) return;
+      stopLiveCamera();
       recipeMsg.classList.add("hidden");
 
       const nowStr = new Date().toLocaleDateString("it-IT");
@@ -2389,9 +2495,10 @@
 
     analyzePhotoBtn.addEventListener("click", async () => {
       if (currentPhotoDataUrls.length === 0) {
-        showAiStatus("Seleziona, trascina o scatta prima almeno una foto.", false);
+        showAiStatus("Scatta o seleziona prima almeno una foto.", false);
         return;
       }
+      stopLiveCamera();
       analyzePhotoBtn.disabled = true;
       showAiStatus(`Analisi di ${currentPhotoDataUrls.length} foto in corso con ${getConfiguredModel()}...`, true);
       try {
@@ -2655,6 +2762,7 @@
     });
 
     function clearRecipeForm(keepPhotoAndQueue = false) {
+      stopLiveCamera();
       recipeForm.reset();
       refineInstructionInput.value = "";
       refineReplyText.textContent = "";
