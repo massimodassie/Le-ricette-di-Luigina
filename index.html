@@ -222,7 +222,7 @@
       color: var(--ink);
     }
 
-    /* GRIGLIA RICETTE ARIADNA/MINIMAL SENZA RIQUADRI PESANTI */
+    /* GRIGLIA RICETTE MINIMAL SENZA RIQUADRI PESANTI */
     .recipes-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -710,7 +710,7 @@
             <button type="button" id="close-setup-btn" class="secondary small">Chiudi</button>
           </div>
           <p style="color: var(--muted); font-size: 14px;">
-            Personalizza le categorie dell'archivio e le regole di catalogazione AI. Le modifiche si applicano subito a tutti gli utenti.
+            Personalizza le categorie dell'archivio, il modello Gemini e le regole di catalogazione AI. Le modifiche si applicano subito a tutti gli utenti.
           </p>
 
           <h3>Categorie ricette</h3>
@@ -728,7 +728,7 @@
 
           <hr style="border: 0; border-top: 1px solid var(--border); margin: 16px 0;" />
 
-          <h3>Collegamento AI (Proxy Apps Script o Chiave locale)</h3>
+          <h3>Collegamento AI e scelta modello</h3>
           <div class="row">
             <div>
               <label for="proxy-url-input">URL Web App Google Apps Script:</label>
@@ -746,11 +746,16 @@
               <input type="password" id="local-gemini-key" placeholder="AIza..." />
             </div>
             <div>
-              <label for="gemini-model-select">Modello Gemini:</label>
+              <label for="gemini-model-select">Modello Gemini principale:</label>
               <select id="gemini-model-select">
-                <option value="gemini-3.8-flash">gemini-3.8-flash (consigliato su foto, audio e testi)</option>
+                <option value="gemini-3.8-flash">gemini-3.8-flash (consigliato: bilanciato su foto, audio e testi)</option>
+                <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite (leggero e rapido, ottimo se Flash è occupato)</option>
+                <option value="gemini-4-neon">gemini-4-neon (alta capacità - richiede billing attivo su Google AI)</option>
               </select>
             </div>
+          </div>
+          <div style="font-size: 12px; color: var(--muted); margin-top: 6px;">
+            Nota: se il modello scelto risulta temporaneamente sovraccarico (503), l'app ritenta automaticamente alternando tra i modelli disponibili.
           </div>
 
           <div class="row" style="margin-top: 14px;">
@@ -1012,6 +1017,12 @@
     const db = getFirestore(app);
     const googleProvider = new GoogleAuthProvider();
 
+    const ALLOWED_MODELS = [
+      "gemini-3.8-flash",
+      "gemini-3.5-flash-lite",
+      "gemini-4-neon"
+    ];
+
     const DEFAULT_CATEGORIES = [
       "Antipasti",
       "Primi",
@@ -1159,6 +1170,11 @@
     const zoomLabel = document.getElementById("zoom-label");
     const closeLightboxBtn = document.getElementById("close-lightbox-btn");
 
+    function getConfiguredModel() {
+      const saved = (localStorage.getItem("luigina_gemini_model") || "").trim();
+      return ALLOWED_MODELS.includes(saved) ? saved : "gemini-3.8-flash";
+    }
+
     function canEditRecipes() {
       return currentRole === "admin" || currentRole === "editor";
     }
@@ -1283,6 +1299,9 @@
           if (typeof data.proxySecret === "string") {
             localStorage.setItem("luigina_proxy_secret", data.proxySecret.trim());
           }
+          if (typeof data.geminiModel === "string" && ALLOWED_MODELS.includes(data.geminiModel.trim())) {
+            localStorage.setItem("luigina_gemini_model", data.geminiModel.trim());
+          }
         } else {
           categories = [...DEFAULT_CATEGORIES];
           aiRules = DEFAULT_AI_RULES;
@@ -1325,7 +1344,7 @@
         proxyUrlInput.value = localStorage.getItem("luigina_proxy_url") || "";
         proxySecretInput.value = localStorage.getItem("luigina_proxy_secret") || "";
         localGeminiKeyInput.value = localStorage.getItem("luigina_gemini_key") || "";
-        geminiModelSelect.value = "gemini-3.8-flash";
+        geminiModelSelect.value = getConfiguredModel();
         setupMsg.classList.add("hidden");
         renderSetupCategories();
         setupCard.classList.remove("hidden");
@@ -1391,7 +1410,9 @@
       const proxyUrl = proxyUrlInput.value.trim();
       const proxySecret = proxySecretInput.value.trim();
       const keyVal = localGeminiKeyInput.value.trim();
-      const modelVal = "gemini-3.8-flash";
+      const chosenModel = ALLOWED_MODELS.includes(geminiModelSelect.value)
+        ? geminiModelSelect.value
+        : "gemini-3.8-flash";
 
       if (proxyUrl) localStorage.setItem("luigina_proxy_url", proxyUrl);
       else localStorage.removeItem("luigina_proxy_url");
@@ -1402,7 +1423,7 @@
       if (keyVal) localStorage.setItem("luigina_gemini_key", keyVal);
       else localStorage.removeItem("luigina_gemini_key");
 
-      localStorage.setItem("luigina_gemini_model", modelVal);
+      localStorage.setItem("luigina_gemini_model", chosenModel);
 
       try {
         await setDoc(doc(db, "settings", "general"), {
@@ -1410,11 +1431,12 @@
           aiRules: aiRulesInput.value.trim() || DEFAULT_AI_RULES,
           proxyUrl,
           proxySecret,
+          geminiModel: chosenModel,
           updatedAt: serverTimestamp(),
           updatedBy: auth.currentUser.uid
         }, { merge: true });
 
-        setupMsg.textContent = "Impostazioni salvate e sincronizzate!";
+        setupMsg.textContent = `Impostazioni salvate! Modello attivo: ${chosenModel}`;
         setupMsg.classList.remove("hidden");
       } catch (err) {
         console.error(err);
@@ -1710,8 +1732,7 @@
       const proxyUrl = (localStorage.getItem("luigina_proxy_url") || "").trim();
       const proxySecret = (localStorage.getItem("luigina_proxy_secret") || "").trim();
       const localKey = (localStorage.getItem("luigina_gemini_key") || "").trim();
-      const model = "gemini-3.8-flash";
-      localStorage.setItem("luigina_gemini_model", model);
+      const primaryModel = getConfiguredModel();
 
       if (!proxyUrl && !localKey) {
         throw new Error("Configura l'URL Proxy Apps Script oppure la chiave API Gemini nel pannello 'Setup' (Admin).");
@@ -1721,12 +1742,21 @@
         throw new Error(`URL proxy non valido: ${proxyUrl}`);
       }
 
+      const fallbackSequence = [
+        primaryModel,
+        primaryModel === "gemini-3.5-flash-lite" ? "gemini-3.8-flash" : "gemini-3.5-flash-lite",
+        primaryModel,
+        "gemini-3.5-flash-lite",
+        primaryModel
+      ];
+
       let lastErr = null;
 
-      for (let attempt = 1; attempt <= 4; attempt++) {
+      for (let attempt = 1; attempt <= fallbackSequence.length; attempt++) {
+        const model = fallbackSequence[attempt - 1];
         try {
           if (attempt > 1) {
-            showAiStatus(`Server AI occupato: nuovo tentativo ${attempt} di 4...`, true);
+            showAiStatus(`Server AI occupato: tentativo ${attempt}/${fallbackSequence.length} con ${model}...`, true);
           }
 
           if (proxyUrl) {
@@ -1764,7 +1794,7 @@
 
             if (isOverloaded) {
               lastErr = new Error(`Modello ${model} temporaneamente sovraccarico (503).`);
-              await new Promise((r) => setTimeout(r, 2500 * attempt));
+              await new Promise((r) => setTimeout(r, 2000 * attempt));
               continue;
             }
 
@@ -1786,7 +1816,7 @@
 
             if (resp.status === 503 || resp.status === 429) {
               lastErr = new Error(`Modello ${model} temporaneamente sovraccarico (${resp.status}).`);
-              await new Promise((r) => setTimeout(r, 2500 * attempt));
+              await new Promise((r) => setTimeout(r, 2000 * attempt));
               continue;
             }
 
@@ -1802,7 +1832,7 @@
               `Failed to fetch verso il proxy Apps Script (${proxyUrl}).\n` +
               `Dettaglio tecnico: ${err.message}`
             );
-            await new Promise((r) => setTimeout(r, 1400));
+            await new Promise((r) => setTimeout(r, 1500));
             continue;
           }
           if (String(err.message || "").includes("sovraccarico")) {
@@ -1813,7 +1843,7 @@
         }
       }
 
-      throw lastErr || new Error("Il modello Gemini è momentaneamente sovraccarico. Riprova tra un minuto.");
+      throw lastErr || new Error("I server Gemini sono momentaneamente sovraccarichi. Riprova tra un minuto.");
     }
 
     function normalizeRecipeItem(item) {
@@ -1953,7 +1983,7 @@
         return;
       }
       analyzePhotoBtn.disabled = true;
-      showAiStatus(`Analisi di ${currentPhotoDataUrls.length} foto in corso con l'AI...`, true);
+      showAiStatus(`Analisi di ${currentPhotoDataUrls.length} foto in corso con ${getConfiguredModel()}...`, true);
       try {
         extractedRecipesQueue = await callGeminiRecipeExtractor({ photoDataUrls: currentPhotoDataUrls });
         loadExtractedRecipeAt(0);
@@ -1976,7 +2006,7 @@
         return;
       }
       analyzeAudioBtn.disabled = true;
-      showAiStatus("Ascolto e analisi dell'audio in corso con l'AI...", true);
+      showAiStatus(`Ascolto e analisi dell'audio in corso con ${getConfiguredModel()}...`, true);
       try {
         extractedRecipesQueue = await callGeminiRecipeExtractor({ audioMedia: currentAudioMedia });
         loadExtractedRecipeAt(0);
@@ -1994,7 +2024,7 @@
         return;
       }
       analyzeVideoBtn.disabled = true;
-      showAiStatus("Analisi del video in corso con l'AI...", true);
+      showAiStatus(`Analisi del video in corso con ${getConfiguredModel()}...`, true);
       try {
         extractedRecipesQueue = await callGeminiRecipeExtractor({ videoMedia: currentVideoMedia });
         loadExtractedRecipeAt(0);
@@ -2013,7 +2043,7 @@
         return;
       }
       analyzeTextBtn.disabled = true;
-      showAiStatus("Strutturazione del testo in corso con l'AI...", true);
+      showAiStatus(`Strutturazione del testo in corso con ${getConfiguredModel()}...`, true);
       try {
         extractedRecipesQueue = await callGeminiRecipeExtractor({ rawText: txt });
         loadExtractedRecipeAt(0);
